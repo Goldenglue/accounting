@@ -1,6 +1,6 @@
 package database;
 
-import core.Payment;
+import UI.PaymentTab;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -18,12 +18,13 @@ public class DataProcessing {
         }
         try {
             connection = DriverManager.getConnection("jdbc:h2:E:/Users/IvanOP/IdeaProjects/accounting/src/main/resources\\accountingdb","root","");
+            System.out.println("Database connection successful");
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public static void insertPaymentIntoDatabase(Payment payment) {
+    public static void insertPaymentIntoDatabase(PaymentTab.Payment payment) {
         try {
             Statement statement;
             statement = connection.createStatement();
