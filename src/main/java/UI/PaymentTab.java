@@ -1,10 +1,10 @@
 package UI;
 
+import database.DataProcessing;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -13,6 +13,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.converter.IntegerStringConverter;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 
 public class PaymentTab extends Tab {
     private TableView<PaymentTab.Payment> table;
@@ -20,18 +25,15 @@ public class PaymentTab extends Tab {
     private TableColumn<Payment, Integer> numberColumn;
     private TableColumn<Payment, String> paymentColumn;
     private TableColumn<Payment, String> unitColumn;
-    private TableColumn<Payment, Integer> amountColumn;
-    private TableColumn<Payment, Integer> priceColumn;
     private TableColumn<Payment, Integer> sumColumn;
     private ObservableList<Payment> paymentObservableList;
     private final HBox hBox = new HBox();
     private final VBox vBox = new VBox();
 
     PaymentTab() {
-        paymentObservableList = FXCollections.observableArrayList(
-                new PaymentTab.Payment("02.07.17", 101, "040-05 ООО \"СТС\" у Валеры", 6300, 6300)
-        );
+        paymentObservableList = FXCollections.observableArrayList();
         table = setTableUp();
+        loadPaymentsFromDatabase();
         createGUI();
         this.setContent(vBox);
         this.setText("Платежи");
@@ -43,16 +45,15 @@ public class PaymentTab extends Tab {
         TableView<Payment> table = new TableView<>();
         table.setEditable(true);
 
-
         dateColumn = new TableColumn<>("Дата");
         dateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
         dateColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         dateColumn.setOnEditCommit(t -> (
                 t.getTableView().getItems()
                         .get(t.getTablePosition().getRow()))
-                        .setDate(t.getNewValue())
+                .setDate(t.getNewValue())
         );
-
+        dateColumn.setPrefWidth(60);
 
         numberColumn = new TableColumn<>("№ п/п");
         numberColumn.setCellValueFactory(new PropertyValueFactory<>("number"));
@@ -60,47 +61,28 @@ public class PaymentTab extends Tab {
         numberColumn.setOnEditCommit(t -> (
                 t.getTableView().getItems()
                         .get(t.getTablePosition().getRow()))
-                        .setNumber(t.getNewValue())
+                .setNumber(t.getNewValue())
         );
-
+        numberColumn.setPrefWidth(60);
 
         paymentColumn = new TableColumn<>("Платеж");
         paymentColumn.setCellValueFactory(new PropertyValueFactory<>("payment"));
-        paymentColumn.setMinWidth(200);
+        paymentColumn.setPrefWidth(400);
         paymentColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         paymentColumn.setOnEditCommit(t ->
-            t.getTableView().getItems()
-                    .get(t.getTablePosition().getRow())
+                t.getTableView().getItems()
+                        .get(t.getTablePosition().getRow())
                         .setPayment(t.getNewValue())
         );
 
-
-        unitColumn = new TableColumn<>("Ед. изм");
+        unitColumn = new TableColumn<>("Тип");
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
         unitColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         unitColumn.setOnEditCommit(t ->
                 t.getTableView().getItems()
                         .get(t.getTablePosition().getRow())
-                        .setUnit(t.getNewValue()));
-
-
-        amountColumn = new TableColumn<>("Кол-во");
-        amountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
-        amountColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        amountColumn.setOnEditCommit(t ->
-                t.getTableView().getItems()
-                        .get(t.getTablePosition().getRow())
-                        .setAmount(t.getNewValue()));
-
-
-        priceColumn = new TableColumn<>("Цена");
-        priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
-        priceColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        priceColumn.setOnEditCommit(t ->
-                t.getTableView().getItems()
-                        .get(t.getTablePosition().getRow())
-                        .setPrice(t.getNewValue()));
-
+                        .setType(t.getNewValue()));
+        unitColumn.setPrefWidth(90);
 
         sumColumn = new TableColumn<>("Сумма");
         sumColumn.setCellValueFactory(new PropertyValueFactory<>("sum"));
@@ -109,51 +91,61 @@ public class PaymentTab extends Tab {
                 t.getTableView().getItems()
                         .get(t.getTablePosition().getRow())
                         .setSum(t.getNewValue()));
+        sumColumn.setPrefWidth(60);
 
         table.setItems(paymentObservableList);
-        table.getColumns().addAll(dateColumn, numberColumn, paymentColumn, unitColumn, amountColumn, priceColumn, sumColumn);
+        table.getColumns().addAll(dateColumn, numberColumn, paymentColumn, unitColumn, sumColumn);
         return table;
     }
 
+    private void loadPaymentsFromDatabase() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        ResultSet resultSet = DataProcessing.getPaymentsData();
+        try {
+            while (resultSet.next()) {
+                paymentObservableList.add(new Payment(dateFormat.format(resultSet.getDate(1)),resultSet.getInt(2),resultSet.getString(3),resultSet.getInt(5)));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void createGUI() {
-        final TextField date = new TextField();
-        date.setPrefWidth(dateColumn.getWidth());
-        date.setPromptText("Дата");
+        final TextField addDate = new TextField();
+        addDate.setMaxWidth(dateColumn.getPrefWidth());
+        addDate.setPromptText("Дата");
 
-        TextField number = new TextField();
-        number.setPrefWidth(numberColumn.getPrefWidth());
-        number.setPromptText("№ п/п");
+        TextField addNumber = new TextField();
+        addNumber.setPrefWidth(numberColumn.getPrefWidth());
+        addNumber.setPromptText("№ п/п");
 
-        final TextField payment = new TextField();
-        payment.setPrefWidth(paymentColumn.getWidth());
-        payment.setPromptText("Платеж");
+        final TextField addPayment = new TextField();
+        addPayment.setPrefWidth(paymentColumn.getPrefWidth());
+        addPayment.setPromptText("Платеж");
 
-        final TextField unit = new TextField();
-        unit.setText("Месяц");
-        unit.setPromptText("Ед. изм.");
+        final TextField addUnit = new TextField();
+        addUnit.setPrefWidth(unitColumn.getPrefWidth());
+        addUnit.setText("Аренда");
+        addUnit.setPromptText("Тип");
 
-        final TextField amount = new TextField();
-        amount.setText("1");
-        amount.setPromptText("Кол-во");
 
-        final TextField price = new TextField();
-        price.setPromptText("Цена");
-
-        final TextField sum = new TextField();
-        sum.setPromptText("Сумма");
+        final TextField addSum = new TextField();
+        addSum.setPrefWidth(sumColumn.getPrefWidth());
+        addSum.setPromptText("Сумма");
 
         final Button addButton = new Button("Добавить");
         addButton.setOnAction(action -> {
-            paymentObservableList.add(new Payment(date.getText(), Integer.parseInt(number.getText()), payment.getText(),
-                                        Integer.parseInt(price.getText()), Integer.parseInt(sum.getText())));
-            date.clear();
-            number.clear();
-            payment.clear();
-            price.clear();
-            sum.clear();
+            Payment payment = new Payment(addDate.getText(), Integer.parseInt(addNumber.getText()), addPayment.getText(),
+                    Integer.parseInt(addSum.getText()));
+            DataProcessing.insertPaymentIntoDatabase(payment);
+            paymentObservableList.add(payment);
+            addDate.clear();
+            addNumber.clear();
+            addPayment.clear();
+            addSum.clear();
         });
 
-        hBox.getChildren().addAll(date, number, payment, unit, amount, price, sum, addButton);
+        hBox.getChildren().addAll(addDate, addNumber, addPayment, addUnit, addSum, addButton);
 
         vBox.setSpacing(5);
         vBox.setPadding(new Insets(10, 0, 0, 10));
@@ -166,16 +158,14 @@ public class PaymentTab extends Tab {
         private final SimpleStringProperty date;
         private final SimpleIntegerProperty number;
         private final SimpleStringProperty payment;
-        private final SimpleStringProperty unit = new SimpleStringProperty("Месяц");
-        private final SimpleIntegerProperty amount = new SimpleIntegerProperty(1);
-        private final SimpleIntegerProperty price;
+        private final SimpleStringProperty type = new SimpleStringProperty("Аренда");
         private final SimpleIntegerProperty sum;
 
-        public Payment(String date, int number, String payment, int price, int sum) {
+
+        public Payment(String date, int number, String payment, int sum) {
             this.date = new SimpleStringProperty(date);
             this.number = new SimpleIntegerProperty(number);
             this.payment = new SimpleStringProperty(payment);
-            this.price = new SimpleIntegerProperty(price);
             this.sum = new SimpleIntegerProperty(sum);
         }
 
@@ -215,40 +205,16 @@ public class PaymentTab extends Tab {
             this.payment.set(payment);
         }
 
-        public String getUnit() {
-            return unit.get();
+        public String getType() {
+            return type.get();
         }
 
         public SimpleStringProperty unitProperty() {
-            return unit;
+            return type;
         }
 
-        public void setUnit(String unit) {
-            this.unit.set(unit);
-        }
-
-        public int getAmount() {
-            return amount.get();
-        }
-
-        public SimpleIntegerProperty amountProperty() {
-            return amount;
-        }
-
-        public void setAmount(int amount) {
-            this.amount.set(amount);
-        }
-
-        public int getPrice() {
-            return price.get();
-        }
-
-        public SimpleIntegerProperty priceProperty() {
-            return price;
-        }
-
-        public void setPrice(int price) {
-            this.price.set(price);
+        public void setType(String unit) {
+            this.type.set(unit);
         }
 
         public int getSum() {
@@ -262,5 +228,6 @@ public class PaymentTab extends Tab {
         public void setSum(int sum) {
             this.sum.set(sum);
         }
+
     }
 }

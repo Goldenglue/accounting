@@ -2,10 +2,7 @@ package database;
 
 import UI.PaymentTab;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 public class DataProcessing {
     private static Connection connection;
@@ -26,13 +23,39 @@ public class DataProcessing {
 
     public static void insertPaymentIntoDatabase(PaymentTab.Payment payment) {
         try {
-            Statement statement;
-            statement = connection.createStatement();
-            String query = "INSERT INTO ACCOUNTING.PAYMENTS VALUES ('2017-05-03','Аренда','4000','VOT PRAYM TOLKO CHTO','3000')";
-            statement.execute(query);
+            PreparedStatement preparedInsertStatement;
+
+            String insertStatement =  "INSERT INTO ACCOUNTING.PAYMENTS VALUES" + "(?,?,?,?,?)";
+
+            preparedInsertStatement = connection.prepareStatement(insertStatement);
+
+            preparedInsertStatement.setDate(1, Date.valueOf(payment.getDate()));
+            preparedInsertStatement.setInt(2, payment.getNumber());
+            preparedInsertStatement.setString(3,payment.getPayment());
+            preparedInsertStatement.setString(4,payment.getType());
+            preparedInsertStatement.setInt(5,payment.getSum());
+
+            preparedInsertStatement.executeUpdate();
+
+            connection.commit();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public static ResultSet getPaymentsData() {
+        Statement statement;
+
+        String query = "SELECT * FROM ACCOUNTING.PAYMENTS";
+
+        try {
+            statement = connection.createStatement();
+            return statement.executeQuery(query);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
     }
 
 }
