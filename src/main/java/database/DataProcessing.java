@@ -3,6 +3,8 @@ package database;
 import UI.PaymentTab;
 
 import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 public class DataProcessing {
     private static Connection connection;
@@ -29,7 +31,17 @@ public class DataProcessing {
 
             preparedInsertStatement = connection.prepareStatement(insertStatement);
 
-            preparedInsertStatement.setDate(1, Date.valueOf(payment.getDate()));
+            SimpleDateFormat sourceFormat = new SimpleDateFormat("dd.MM.yyyy");
+            SimpleDateFormat targetFormat = new SimpleDateFormat("yyyy-MM-dd");
+            String formattedDate = null;
+            try {
+                formattedDate = targetFormat.format(sourceFormat.parse(payment.getDate()));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+
+            preparedInsertStatement.setDate(1, Date.valueOf(formattedDate));
             preparedInsertStatement.setInt(2, payment.getNumber());
             preparedInsertStatement.setString(3,payment.getPayment());
             preparedInsertStatement.setString(4,payment.getType());

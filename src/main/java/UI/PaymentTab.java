@@ -15,7 +15,6 @@ import javafx.util.converter.IntegerStringConverter;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 
@@ -53,7 +52,7 @@ public class PaymentTab extends Tab {
                         .get(t.getTablePosition().getRow()))
                 .setDate(t.getNewValue())
         );
-        dateColumn.setPrefWidth(60);
+        dateColumn.setPrefWidth(80);
 
         numberColumn = new TableColumn<>("№ п/п");
         numberColumn.setCellValueFactory(new PropertyValueFactory<>("number"));
@@ -99,7 +98,7 @@ public class PaymentTab extends Tab {
     }
 
     private void loadPaymentsFromDatabase() {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         ResultSet resultSet = DataProcessing.getPaymentsData();
         try {
             while (resultSet.next()) {
