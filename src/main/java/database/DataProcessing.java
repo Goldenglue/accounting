@@ -1,10 +1,10 @@
 package database;
 
 import UI.PaymentTab;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.*;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 
 public class DataProcessing {
     private static Connection connection;
@@ -31,17 +31,11 @@ public class DataProcessing {
 
             preparedInsertStatement = connection.prepareStatement(insertStatement);
 
-            SimpleDateFormat sourceFormat = new SimpleDateFormat("dd.MM.yyyy");
-            SimpleDateFormat targetFormat = new SimpleDateFormat("yyyy-MM-dd");
-            String formattedDate = null;
-            try {
-                formattedDate = targetFormat.format(sourceFormat.parse(payment.getDate()));
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            String formattedDate;
+            formattedDate = formatter.format(payment.getDate());
 
 
-            assert formattedDate != null;
             preparedInsertStatement.setDate(1, Date.valueOf(formattedDate));
             preparedInsertStatement.setInt(2, payment.getNumber());
             preparedInsertStatement.setString(3, payment.getPayment());
@@ -72,6 +66,7 @@ public class DataProcessing {
 
     }
 
+    @Nullable
     public static ResultSet getPaymentsData() {
         Statement statement;
 
