@@ -16,7 +16,7 @@ public class DataProcessing {
             e.printStackTrace();
         }
         try {
-            connection = DriverManager.getConnection("jdbc:h2:E:/Users/IvanOP/IdeaProjects/accounting/src/main/resources\\accountingdb","root","");
+            connection = DriverManager.getConnection("jdbc:h2:E:/Users/IvanOP/IdeaProjects/accounting/src/main/resources\\accountingdb", "root", "");
             System.out.println("Database connection successful");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -27,7 +27,7 @@ public class DataProcessing {
         try {
             PreparedStatement preparedInsertStatement;
 
-            String insertStatement =  "INSERT INTO ACCOUNTING.PAYMENTS VALUES" + "(?,?,?,?,?)";
+            String insertStatement = "INSERT INTO ACCOUNTING.PAYMENTS VALUES" + "(?,?,?,?,?)";
 
             preparedInsertStatement = connection.prepareStatement(insertStatement);
 
@@ -44,9 +44,9 @@ public class DataProcessing {
             assert formattedDate != null;
             preparedInsertStatement.setDate(1, Date.valueOf(formattedDate));
             preparedInsertStatement.setInt(2, payment.getNumber());
-            preparedInsertStatement.setString(3,payment.getPayment());
-            preparedInsertStatement.setString(4,payment.getType());
-            preparedInsertStatement.setInt(5,payment.getSum());
+            preparedInsertStatement.setString(3, payment.getPayment());
+            preparedInsertStatement.setString(4, payment.getType());
+            preparedInsertStatement.setInt(5, payment.getSum());
 
             preparedInsertStatement.executeUpdate();
 
@@ -54,6 +54,22 @@ public class DataProcessing {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void deletePaymentFromDatabase(PaymentTab.Payment payment) {
+        PreparedStatement preparedDeleteStatement;
+
+        String deleteStatement = "DELETE FROM ACCOUNTING.PAYMENTS WHERE NUMBER = ?";
+
+        try {
+            preparedDeleteStatement = connection.prepareStatement(deleteStatement);
+            preparedDeleteStatement.setInt(1, payment.getNumber());
+            preparedDeleteStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     public static ResultSet getPaymentsData() {
@@ -68,7 +84,6 @@ public class DataProcessing {
             e.printStackTrace();
             return null;
         }
-
     }
 
 }

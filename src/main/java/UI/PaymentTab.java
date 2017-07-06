@@ -21,13 +21,13 @@ import java.text.SimpleDateFormat;
 
 
 public class PaymentTab extends AbstractTab {
+    private final HBox hBox = new HBox();
+    private final VBox vBox = new VBox();
     private TableColumn<Payment, String> dateColumn;
     private TableColumn<Payment, Integer> numberColumn;
     private TableColumn<Payment, String> paymentColumn;
     private TableColumn<Payment, String> unitColumn;
     private TableColumn<Payment, Integer> sumColumn;
-    private final HBox hBox = new HBox();
-    private final VBox vBox = new VBox();
 
     PaymentTab() {
         observableList = FXCollections.observableArrayList();
@@ -147,7 +147,14 @@ public class PaymentTab extends AbstractTab {
             addSum.clear();
         });
 
-        hBox.getChildren().addAll(addDate, addNumber, addPayment, addUnit, addSum, addButton);
+        final Button removeButton = new Button("Удалить");
+        removeButton.setOnAction(action -> {
+            Payment payment = (Payment) table.getSelectionModel().getSelectedItem();
+            DataProcessing.deletePaymentFromDatabase(payment);
+            table.getItems().remove(payment);
+        });
+
+        hBox.getChildren().addAll(addDate, addNumber, addPayment, addUnit, addSum, addButton, removeButton);
 
         vBox.setSpacing(5);
         vBox.setPadding(new Insets(10, 0, 0, 10));
@@ -175,60 +182,60 @@ public class PaymentTab extends AbstractTab {
             return date.get();
         }
 
-        public SimpleStringProperty dateProperty() {
-            return date;
-        }
-
         public void setDate(String date) {
             this.date.set(date);
+        }
+
+        public SimpleStringProperty dateProperty() {
+            return date;
         }
 
         public int getNumber() {
             return number.get();
         }
 
-        public SimpleIntegerProperty numberProperty() {
-            return number;
-        }
-
         public void setNumber(int number) {
             this.number.set(number);
+        }
+
+        public SimpleIntegerProperty numberProperty() {
+            return number;
         }
 
         public String getPayment() {
             return payment.get();
         }
 
-        public SimpleStringProperty paymentProperty() {
-            return payment;
-        }
-
         public void setPayment(String payment) {
             this.payment.set(payment);
+        }
+
+        public SimpleStringProperty paymentProperty() {
+            return payment;
         }
 
         public String getType() {
             return type.get();
         }
 
-        public SimpleStringProperty unitProperty() {
-            return type;
-        }
-
         public void setType(String unit) {
             this.type.set(unit);
+        }
+
+        public SimpleStringProperty unitProperty() {
+            return type;
         }
 
         public int getSum() {
             return sum.get();
         }
 
-        public SimpleIntegerProperty sumProperty() {
-            return sum;
-        }
-
         public void setSum(int sum) {
             this.sum.set(sum);
+        }
+
+        public SimpleIntegerProperty sumProperty() {
+            return sum;
         }
 
     }
