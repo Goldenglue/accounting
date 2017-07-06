@@ -7,7 +7,7 @@ import javafx.scene.control.TableView;
 
 abstract class AbstractTab extends Tab {
     protected TableView table;
-    protected ObservableList observableList;
+    public static ObservableList observableList;
 
 
     protected abstract TableView setTableUp();

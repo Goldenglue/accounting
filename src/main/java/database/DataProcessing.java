@@ -23,6 +23,8 @@ public class DataProcessing {
         }
     }
 
+
+
     public static void insertPaymentIntoDatabase(PaymentTab.Payment payment) {
         try {
             PreparedStatement preparedInsertStatement;

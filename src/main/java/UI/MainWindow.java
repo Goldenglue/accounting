@@ -7,18 +7,21 @@ import javafx.stage.Stage;
 
 
 public class MainWindow {
+    public static PaymentTab paymentTab;
+    static {
+        paymentTab = getPaymentsTab();
+    }
 
     public static void launch(Stage primaryStage) {
         primaryStage.setTitle("Accounting application");
         TabPane tabPane = new TabPane();
-        tabPane.getTabs().addAll(getPaymentsTab(), getMechanismsTab());
+        tabPane.getTabs().addAll(paymentTab, getMechanismsTab());
         Scene scene = new Scene(tabPane, 1000, 500);
         primaryStage.setScene(scene);
         primaryStage.show();
-
     }
 
-    private static Tab getPaymentsTab() {
+    private static PaymentTab getPaymentsTab() {
         return new PaymentTab();
     }
 
@@ -28,4 +31,5 @@ public class MainWindow {
         tab.setClosable(false);
         return tab;
     }
+
 }

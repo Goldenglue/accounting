@@ -9,19 +9,14 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.layout.Background;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.util.converter.DefaultStringConverter;
-import javafx.util.converter.FormatStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 
 
 public class PaymentTab extends AbstractTab {
@@ -35,8 +30,8 @@ public class PaymentTab extends AbstractTab {
 
     PaymentTab() {
         observableList = FXCollections.observableArrayList();
-        table = setTableUp();
         loadFromDatabase();
+        table = setTableUp();
         createGUI();
         this.setContent(vBox);
         this.setText("Платежи");
@@ -51,24 +46,13 @@ public class PaymentTab extends AbstractTab {
 
         dateColumn = new TableColumn<>("Дата");
         dateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
-        dateColumn.setCellFactory(column -> new TableCell<Payment, LocalDate>() {
-            @Override
-            protected void updateItem(LocalDate item, boolean empty) {
-                super.updateItem(item, empty);
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-                if (!empty) {
-                    setText(formatter.format(item));
-                }
-                if (isEditing()) {
-                    setContentDisplay(ContentDisplay.TEXT_ONLY);
-                }
-            }
-        });
-        dateColumn.setOnEditCommit(t -> (
-                t.getTableView().getItems()
-                        .get(t.getTablePosition().getRow()))
-                .setDate(t.getNewValue())
+        dateColumn.setCellFactory(column -> new LocalDateCellFactory());
+        dateColumn.setOnEditCommit(editCommit -> (
+                editCommit.getTableView().getItems()
+                        .get(editCommit.getTablePosition().getRow()))
+                .setDate(editCommit.getNewValue())
         );
+        dateColumn.setEditable(true);
         dateColumn.setPrefWidth(100);
 
         numberColumn = new TableColumn<>("№ п/п");
@@ -93,6 +77,7 @@ public class PaymentTab extends AbstractTab {
         numberColumn.setPrefWidth(60);
 
         paymentColumn = new TableColumn<>("Платеж");
+
         paymentColumn.setCellValueFactory(new PropertyValueFactory<>("payment"));
         paymentColumn.setPrefWidth(400);
         paymentColumn.setCellFactory(TextFieldTableCell.forTableColumn());
@@ -114,10 +99,11 @@ public class PaymentTab extends AbstractTab {
         sumColumn = new TableColumn<>("Сумма");
         sumColumn.setCellValueFactory(new PropertyValueFactory<>("sum"));
         sumColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        sumColumn.setOnEditCommit(t ->
-                t.getTableView().getItems()
-                        .get(t.getTablePosition().getRow())
-                        .setSum(t.getNewValue()));
+        sumColumn.setOnEditCommit(t -> {
+            t.getTableView().getItems()
+                    .get(t.getTablePosition().getRow())
+                    .setSum(t.getNewValue());
+        });
         sumColumn.setPrefWidth(60);
 
         table.setItems(observableList);
@@ -160,6 +146,7 @@ public class PaymentTab extends AbstractTab {
         );
         typeComboBox.setEditable(false);
         typeComboBox.setValue("Аренда");
+        typeComboBox.setMaxWidth(unitColumn.getPrefWidth());
 
         final TextField addSum = new TextField();
         addSum.setPrefWidth(sumColumn.getPrefWidth());
@@ -182,7 +169,7 @@ public class PaymentTab extends AbstractTab {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("Удаление строки из таблицы");
             alert.setHeaderText(null);
-            alert.setContentText("Вы действительно хотите удалить эту строку?" + "\n" + ((Payment)table.getSelectionModel().getSelectedItem()).getPayment());
+            alert.setContentText("Вы действительно хотите удалить эту строку?" + "\n" + ((Payment) table.getSelectionModel().getSelectedItem()).getPayment());
             alert.showAndWait()
                     .filter(response -> response == ButtonType.OK)
                     .ifPresent(response -> {
@@ -277,5 +264,60 @@ public class PaymentTab extends AbstractTab {
             return sum;
         }
 
+    }
+
+    public class LocalDateCellFactory extends TableCell<Payment, LocalDate> {
+        final TextField textField = new TextField();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+        LocalDateCellFactory() {
+            textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+                if (!isNowFocused) {
+                    processEdit();
+                }
+            });
+            textField.setOnAction(event -> processEdit());
+        }
+        private void processEdit() {
+            String text = textField.getText();
+            commitEdit(LocalDate.parse(text, formatter));
+        }
+
+        @Override
+        protected void updateItem(LocalDate item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty) {
+                setText(null);
+                setGraphic(null);
+            } else if (isEditing()) {
+                setText(null);
+                textField.setText(formatter.format(item));
+                setGraphic(textField);
+            } else {
+                setText(formatter.format(item));
+                setGraphic(null);
+            }
+        }
+
+        @Override
+        public void startEdit() {
+            super.startEdit();
+            textField.setText(formatter.format(getItem()));
+            textField.selectAll();
+            setGraphic(textField);
+        }
+
+        @Override
+        public void cancelEdit() {
+            super.cancelEdit();
+            setText(formatter.format(getItem()));
+            setGraphic(null);
+        }
+
+        @Override
+        public void commitEdit(LocalDate newValue) {
+            super.commitEdit(newValue);
+            ((Payment)this.getTableRow().getItem()).setDate(newValue);
+        }
     }
 }
