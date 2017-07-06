@@ -1,9 +1,10 @@
 package core;
 
-import UI.MainWindow;
 import UI.PaymentTab;
 import database.DataProcessing;
 import javafx.application.Application;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
 
 public class Accounting extends Application {
@@ -20,8 +21,13 @@ public class Accounting extends Application {
 
     @Override
     public void stop() throws Exception {
-        PaymentTab.observableList.forEach(item -> {
-            DataProcessing.insertPaymentIntoDatabase(((PaymentTab.Payment) item));
-        });
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Сохранение изменний");
+        alert.setHeaderText(null);
+        alert.setContentText("Сохранить изменения?");
+        alert.showAndWait()
+                .filter(response -> response == ButtonType.OK)
+                .ifPresent(response -> PaymentTab.observableList.forEach(item -> DataProcessing.insertPaymentIntoDatabase(((PaymentTab.Payment) item))));
+
     }
 }
