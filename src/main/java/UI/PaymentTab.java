@@ -4,9 +4,11 @@ import database.DataProcessing;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
@@ -18,28 +20,27 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 
 
-public class PaymentTab extends Tab {
-    private TableView<PaymentTab.Payment> table;
+public class PaymentTab extends AbstractTab {
     private TableColumn<Payment, String> dateColumn;
     private TableColumn<Payment, Integer> numberColumn;
     private TableColumn<Payment, String> paymentColumn;
     private TableColumn<Payment, String> unitColumn;
     private TableColumn<Payment, Integer> sumColumn;
-    private ObservableList<Payment> paymentObservableList;
     private final HBox hBox = new HBox();
     private final VBox vBox = new VBox();
 
     PaymentTab() {
-        paymentObservableList = FXCollections.observableArrayList();
+        observableList = FXCollections.observableArrayList();
         table = setTableUp();
-        loadPaymentsFromDatabase();
+        loadFromDatabase();
         createGUI();
         this.setContent(vBox);
         this.setText("Платежи");
         this.setClosable(false);
     }
 
-    private TableView<Payment> setTableUp() {
+    @Override
+    protected TableView<Payment> setTableUp() {
 
         TableView<Payment> table = new TableView<>();
         table.setEditable(true);
@@ -92,24 +93,26 @@ public class PaymentTab extends Tab {
                         .setSum(t.getNewValue()));
         sumColumn.setPrefWidth(60);
 
-        table.setItems(paymentObservableList);
+        table.setItems(observableList);
         table.getColumns().addAll(dateColumn, numberColumn, paymentColumn, unitColumn, sumColumn);
         return table;
     }
 
-    private void loadPaymentsFromDatabase() {
+    @Override
+    protected void loadFromDatabase() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         ResultSet resultSet = DataProcessing.getPaymentsData();
         try {
             while (resultSet.next()) {
-                paymentObservableList.add(new Payment(dateFormat.format(resultSet.getDate(1)),resultSet.getInt(2),resultSet.getString(3),resultSet.getInt(5)));
+                observableList.add(new Payment(dateFormat.format(resultSet.getDate(1)), resultSet.getInt(2), resultSet.getString(3), resultSet.getInt(5)));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    private void createGUI() {
+    @Override
+    protected void createGUI() {
         final TextField addDate = new TextField();
         addDate.setMaxWidth(dateColumn.getPrefWidth());
         addDate.setPromptText("Дата");
@@ -137,7 +140,7 @@ public class PaymentTab extends Tab {
             Payment payment = new Payment(addDate.getText(), Integer.parseInt(addNumber.getText()), addPayment.getText(),
                     Integer.parseInt(addSum.getText()));
             DataProcessing.insertPaymentIntoDatabase(payment);
-            paymentObservableList.add(payment);
+            observableList.add(payment);
             addDate.clear();
             addNumber.clear();
             addPayment.clear();

@@ -41,6 +41,7 @@ public class DataProcessing {
             }
 
 
+            assert formattedDate != null;
             preparedInsertStatement.setDate(1, Date.valueOf(formattedDate));
             preparedInsertStatement.setInt(2, payment.getNumber());
             preparedInsertStatement.setString(3,payment.getPayment());
