@@ -14,7 +14,7 @@ abstract class AbstractTab extends Tab {
 
     protected abstract void loadFromDatabase();
 
-    protected abstract void createGUI();
+    protected void createGUI() {}
 
 
 }
