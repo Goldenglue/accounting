@@ -19,7 +19,7 @@ public class Accounting extends Application {
         UI.MainWindow.launch(primaryStage);
     }
 
-    @Override
+    /*@Override
     public void stop() throws Exception {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Сохранение изменний");
@@ -29,5 +29,5 @@ public class Accounting extends Application {
                 .filter(response -> response == ButtonType.OK)
                 .ifPresent(response -> PaymentTab.observableList.forEach(item -> DataProcessing.insertPaymentIntoDatabase(((PaymentTab.Payment) item))));
 
-    }
+    }*/
 }

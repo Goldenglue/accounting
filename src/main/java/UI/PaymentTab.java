@@ -2,6 +2,7 @@ package UI;
 
 import database.DataProcessing;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -103,6 +104,7 @@ public class PaymentTab extends AbstractTab {
             t.getTableView().getItems()
                     .get(t.getTablePosition().getRow())
                     .setSum(t.getNewValue());
+            DataProcessing.updateValueInDatabase(t.getTableView().getItems().get(t.getTablePosition().getRow()));
         });
         sumColumn.setPrefWidth(60);
 
@@ -117,7 +119,7 @@ public class PaymentTab extends AbstractTab {
         try {
             while (resultSet.next()) {
                 observableList.add(new Payment(resultSet.getDate(1).toLocalDate(), resultSet.getInt(2),
-                        resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5)));
+                        resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5), resultSet.getInt(6)));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -156,7 +158,7 @@ public class PaymentTab extends AbstractTab {
         addButton.setOnAction(action -> {
             Payment payment = new Payment(datePicker.getValue(), Integer.parseInt(addNumber.getText()), addPayment.getText(),
                     typeComboBox.getValue(), Integer.parseInt(addSum.getText()));
-            DataProcessing.insertPaymentIntoDatabase(payment);
+            payment.setID(DataProcessing.insertPaymentIntoDatabase(payment));
             observableList.add(payment);
             addNumber.clear();
             addPayment.clear();
@@ -194,7 +196,7 @@ public class PaymentTab extends AbstractTab {
         private final SimpleStringProperty payment;
         private final SimpleStringProperty type;
         private final SimpleIntegerProperty sum;
-
+        private SimpleIntegerProperty ID;
 
         public Payment(LocalDate date, int number, String payment, String type, int sum) {
             this.date = new SimpleObjectProperty<>(date);
@@ -202,6 +204,30 @@ public class PaymentTab extends AbstractTab {
             this.payment = new SimpleStringProperty(payment);
             this.type = new SimpleStringProperty(type);
             this.sum = new SimpleIntegerProperty(sum);
+            this.ID = new SimpleIntegerProperty(0);
+        }
+
+        public Payment(LocalDate date, int number, String payment, String type, int sum, int ID) {
+            this.date = new SimpleObjectProperty<>(date);
+            this.number = new SimpleIntegerProperty(number);
+            this.payment = new SimpleStringProperty(payment);
+            this.type = new SimpleStringProperty(type);
+            this.sum = new SimpleIntegerProperty(sum);
+            this.ID = new SimpleIntegerProperty(ID);
+        }
+
+
+        public int getID() {
+            return ID.get();
+        }
+
+        public SimpleIntegerProperty IDProperty() {
+            return ID;
+        }
+
+        public void setID(int ID) {
+            System.out.println("THIS IS IT " + ID);
+            this.ID.set(ID);
         }
 
         public LocalDate getDate() {
@@ -266,7 +292,7 @@ public class PaymentTab extends AbstractTab {
 
     }
 
-    public class LocalDateCellFactory extends TableCell<Payment, LocalDate> {
+    public static class LocalDateCellFactory extends TableCell<Payment, LocalDate> {
         final TextField textField = new TextField();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
@@ -278,6 +304,7 @@ public class PaymentTab extends AbstractTab {
             });
             textField.setOnAction(event -> processEdit());
         }
+
         private void processEdit() {
             String text = textField.getText();
             commitEdit(LocalDate.parse(text, formatter));
@@ -317,7 +344,7 @@ public class PaymentTab extends AbstractTab {
         @Override
         public void commitEdit(LocalDate newValue) {
             super.commitEdit(newValue);
-            ((Payment)this.getTableRow().getItem()).setDate(newValue);
+            ((Payment) this.getTableRow().getItem()).setDate(newValue);
         }
     }
 }
