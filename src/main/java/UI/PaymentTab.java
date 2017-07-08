@@ -4,7 +4,6 @@ import database.DataProcessing;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -29,7 +28,6 @@ public class PaymentTab extends AbstractTab {
     private TableColumn<Payment, Integer> sumColumn;
 
     PaymentTab() {
-        observableList = FXCollections.observableArrayList();
         loadFromDatabase();
         table = setTableUp();
         createGUI();
@@ -48,7 +46,6 @@ public class PaymentTab extends AbstractTab {
         dateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
         dateColumn.setCellFactory(column -> new LocalDateCellFactory());
         dateColumn.setOnEditCommit(editCommit -> {
-
             editCommit.getTableView().getItems()
                     .get(editCommit.getTablePosition().getRow())
                     .setDate(editCommit.getNewValue());
@@ -80,7 +77,6 @@ public class PaymentTab extends AbstractTab {
         numberColumn.setPrefWidth(60);
 
         paymentColumn = new TableColumn<>("Платеж");
-
         paymentColumn.setCellValueFactory(new PropertyValueFactory<>("payment"));
         paymentColumn.setPrefWidth(400);
         paymentColumn.setCellFactory(TextFieldTableCell.forTableColumn());
