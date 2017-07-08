@@ -63,8 +63,14 @@ public class DataProcessing {
 
         try {
             preparedUpdateStatement = connection.prepareStatement("UPDATE ACCOUNTING.PAYMENTS SET DATE = ? , NUMBER = ?, PAYMENT = ?, TYPE = ?, AMOUNT = ? WHERE ID = ?");
+            preparedUpdateStatement.setDate(1, Date.valueOf(payment.getDate()));
+            preparedUpdateStatement.setInt(2, payment.getNumber());
+            preparedUpdateStatement.setString(3, payment.getPayment());
+            preparedUpdateStatement.setString(4, payment.getType());
+            preparedUpdateStatement.setInt(5, payment.getSum());
+            preparedUpdateStatement.setInt(6, payment.getID());
 
-
+            preparedUpdateStatement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -2,7 +2,6 @@ package UI;
 
 import database.DataProcessing;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -18,6 +17,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 
 
 public class PaymentTab extends AbstractTab {
@@ -48,11 +48,13 @@ public class PaymentTab extends AbstractTab {
         dateColumn = new TableColumn<>("Дата");
         dateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
         dateColumn.setCellFactory(column -> new LocalDateCellFactory());
-        dateColumn.setOnEditCommit(editCommit -> (
-                editCommit.getTableView().getItems()
-                        .get(editCommit.getTablePosition().getRow()))
-                .setDate(editCommit.getNewValue())
-        );
+        dateColumn.setOnEditCommit(editCommit -> {
+
+            editCommit.getTableView().getItems()
+                    .get(editCommit.getTablePosition().getRow())
+                    .setDate(editCommit.getNewValue());
+            DataProcessing.updateValueInDatabase(editCommit.getTableView().getItems().get(editCommit.getTablePosition().getRow()));
+        });
         dateColumn.setEditable(true);
         dateColumn.setPrefWidth(100);
 
@@ -70,11 +72,12 @@ public class PaymentTab extends AbstractTab {
                 setStyle("-fx-background-color: #f6ff4a");
             }
         });*/
-        numberColumn.setOnEditCommit(t -> (
-                t.getTableView().getItems()
-                        .get(t.getTablePosition().getRow()))
-                .setNumber(t.getNewValue())
-        );
+        numberColumn.setOnEditCommit(t -> {
+            t.getTableView().getItems()
+                    .get(t.getTablePosition().getRow())
+                    .setNumber(t.getNewValue());
+            DataProcessing.updateValueInDatabase(t.getTableView().getItems().get(t.getTablePosition().getRow()));
+        });
         numberColumn.setPrefWidth(60);
 
         paymentColumn = new TableColumn<>("Платеж");
@@ -82,19 +85,23 @@ public class PaymentTab extends AbstractTab {
         paymentColumn.setCellValueFactory(new PropertyValueFactory<>("payment"));
         paymentColumn.setPrefWidth(400);
         paymentColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        paymentColumn.setOnEditCommit(t ->
-                t.getTableView().getItems()
-                        .get(t.getTablePosition().getRow())
-                        .setPayment(t.getNewValue())
-        );
+        paymentColumn.setOnEditCommit(t -> {
+            t.getTableView().getItems()
+                    .get(t.getTablePosition().getRow())
+                    .setPayment(t.getNewValue());
+            DataProcessing.updateValueInDatabase(t.getTableView().getItems().get(t.getTablePosition().getRow()));
+        });
 
         unitColumn = new TableColumn<>("Тип");
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
         unitColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        unitColumn.setOnEditCommit(t ->
-                t.getTableView().getItems()
-                        .get(t.getTablePosition().getRow())
-                        .setType(t.getNewValue()));
+        unitColumn.setOnEditCommit(t -> {
+            t.getTableView().getItems()
+                    .get(t.getTablePosition().getRow())
+                    .setType(t.getNewValue());
+            DataProcessing.updateValueInDatabase(t.getTableView().getItems().get(t.getTablePosition().getRow()));
+        });
+
         unitColumn.setPrefWidth(90);
 
         sumColumn = new TableColumn<>("Сумма");
@@ -120,6 +127,11 @@ public class PaymentTab extends AbstractTab {
             while (resultSet.next()) {
                 observableList.add(new Payment(resultSet.getDate(1).toLocalDate(), resultSet.getInt(2),
                         resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5), resultSet.getInt(6)));
+                observableList.sort((o1, o2) -> {
+                    Payment payment1 = ((Payment) o1);
+                    Payment payment2 = ((Payment) o2);
+                    return payment1.getID() - payment2.getID();
+                });
             }
         } catch (SQLException e) {
             e.printStackTrace();
