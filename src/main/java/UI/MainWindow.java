@@ -1,7 +1,6 @@
 package UI;
 
 import javafx.scene.Scene;
-import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.stage.Stage;
 
@@ -9,16 +8,18 @@ import javafx.stage.Stage;
 public class MainWindow {
     private static PaymentTab paymentTab;
     private static RentPaymentsTab rentPaymentsTab;
+    private static MechanismsPaymentTab mechanismsPaymentTab;
 
     static {
         paymentTab = getPaymentsTab();
         rentPaymentsTab = getRentPaymentsTab();
+        mechanismsPaymentTab = getMechanismsTab();
     }
 
     public static void launch(Stage primaryStage) {
-        primaryStage.setTitle("Accounting application");
+        primaryStage.setTitle("Учет");
         TabPane tabPane = new TabPane();
-        tabPane.getTabs().addAll(paymentTab, getRentPaymentsTab());
+        tabPane.getTabs().addAll(paymentTab, rentPaymentsTab, mechanismsPaymentTab);
         Scene scene = new Scene(tabPane, 1000, 500);
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -32,11 +33,8 @@ public class MainWindow {
         return new RentPaymentsTab();
     }
 
-    private static Tab getMechanismsTab() {
-        Tab tab = new Tab();
-        tab.setText("Механизмы");
-        tab.setClosable(false);
-        return tab;
+    private static MechanismsPaymentTab getMechanismsTab() {
+        return new MechanismsPaymentTab();
     }
 
 }

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="accountingdb" uuid="cc419cce-8cf2-4d1e-91f5-0b1022206516">
+    <data-source source="LOCAL" name="data" uuid="bfb23951-6534-4910-ae98-86600707f2a1">
       <driver-ref>h2.unified</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.h2.Driver</jdbc-driver>
-      <jdbc-url>jdbc:h2:$PROJECT_DIR$/src/main/resources\accountingdb</jdbc-url>
+      <jdbc-url>jdbc:h2:~/data</jdbc-url>
     </data-source>
   </component>
 </project>

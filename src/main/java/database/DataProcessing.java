@@ -16,7 +16,7 @@ public class DataProcessing {
             e.printStackTrace();
         }
         try {
-            connection = DriverManager.getConnection("jdbc:h2:E:/Users/IvanOP/IdeaProjects/accounting/src/main/resources\\accountingdb", "root", "");
+            connection = DriverManager.getConnection("jdbc:h2:~/data", "", "");
             System.out.println("Database connection successful");
         } catch (SQLException e) {
             e.printStackTrace();

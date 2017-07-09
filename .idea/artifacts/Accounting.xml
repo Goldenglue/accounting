@@ -1,0 +1,21 @@
+<component name="ArtifactManager">
+  <artifact type="javafx" name="Accounting">
+    <output-path>$PROJECT_DIR$/out/artifacts/Accounting</output-path>
+    <properties id="javafx-properties">
+      <options>
+        <option name="appClass" value="core.Accounting" />
+        <option name="description" value="" />
+        <option name="htmlPlaceholderId" value="" />
+        <option name="title" value="Accounting" />
+        <option name="vendor" value="Ivan" />
+        <option name="version" value="" />
+      </options>
+    </properties>
+    <root id="root">
+      <element id="archive" name="Accounting.jar">
+        <element id="module-output" name="accounting_main" />
+      </element>
+      <element id="library" level="project" name="com.h2database:h2:1.4.196" />
+    </root>
+  </artifact>
+</component>

@@ -1,5 +1,6 @@
 package UI;
 
+import javafx.geometry.Insets;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -20,7 +21,13 @@ public class MechanismsPaymentTab extends AbstractTab {
     private TableColumn<PaymentTab.Payment, Integer> sumColumn;
 
     MechanismsPaymentTab() {
-
+        table = setTableUp();
+        vBox.setSpacing(5);
+        vBox.setPadding(new Insets(10, 0, 0, 10));
+        vBox.getChildren().addAll(table);
+        this.setContent(vBox);
+        this.setText("Платежи за механизмы");
+        this.setClosable(false);
     }
 
     @Override
@@ -53,8 +60,8 @@ public class MechanismsPaymentTab extends AbstractTab {
         sumColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         sumColumn.setPrefWidth(60);
 
-        table.setItems(observableList.filtered(item -> item.getType().equals("Аренда")));
-        table.getColumns().addAll(dateColumn,numberColumn,paymentColumn,unitColumn,sumColumn);
+        table.setItems(observableList.filtered(item -> item.getType().equals("Механизм")));
+        table.getColumns().addAll(dateColumn, numberColumn, paymentColumn, unitColumn, sumColumn);
         return table;
     }
 

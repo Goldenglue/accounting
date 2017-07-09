@@ -22,7 +22,6 @@ public class RentPaymentsTab extends AbstractTab {
     private TableColumn<PaymentTab.Payment, Integer> sumColumn;
 
     RentPaymentsTab() {
-        setTableUp();
         table = setTableUp();
         vBox.setSpacing(5);
         vBox.setPadding(new Insets(10, 0, 0, 10));

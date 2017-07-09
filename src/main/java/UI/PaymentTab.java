@@ -122,8 +122,8 @@ public class PaymentTab extends AbstractTab {
         ResultSet resultSet = DataProcessing.getPaymentsData();
         try {
             while (resultSet.next()) {
-                observableList.add(new Payment(resultSet.getDate(1).toLocalDate(), resultSet.getInt(2),
-                        resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5), resultSet.getInt(6)));
+                observableList.add(new Payment(resultSet.getDate(2).toLocalDate(), resultSet.getInt(3),
+                        resultSet.getString(4), resultSet.getString(5), resultSet.getInt(6), resultSet.getInt(1)));
                 observableList.sort(Comparator.comparingInt(Payment::getID));
             }
         } catch (SQLException e) {
