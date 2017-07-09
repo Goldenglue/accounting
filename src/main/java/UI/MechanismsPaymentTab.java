@@ -1,6 +1,5 @@
 package UI;
 
-import javafx.geometry.Insets;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -11,29 +10,21 @@ import javafx.util.converter.IntegerStringConverter;
 
 import java.time.LocalDate;
 
-public class RentPaymentsTab extends AbstractTab {
+public class MechanismsPaymentTab extends AbstractTab {
     private final HBox hBox = new HBox();
     private final VBox vBox = new VBox();
     private TableColumn<PaymentTab.Payment, LocalDate> dateColumn;
     private TableColumn<PaymentTab.Payment, Integer> numberColumn;
     private TableColumn<PaymentTab.Payment, String> paymentColumn;
     private TableColumn<PaymentTab.Payment, String> unitColumn;
-    private TableColumn<PaymentTab.Payment, Integer> priceColumn;
     private TableColumn<PaymentTab.Payment, Integer> sumColumn;
 
-    RentPaymentsTab() {
-        setTableUp();
-        table = setTableUp();
-        vBox.setSpacing(5);
-        vBox.setPadding(new Insets(10, 0, 0, 10));
-        vBox.getChildren().addAll(table);
-        this.setContent(vBox);
-        this.setText("Платежи за аренду");
-        this.setClosable(false);
+    MechanismsPaymentTab() {
+
     }
 
     @Override
-    protected TableView<PaymentTab.Payment> setTableUp() {
+    protected TableView setTableUp() {
         TableView<PaymentTab.Payment> table = new TableView<>();
         table.setEditable(false);
 
@@ -66,4 +57,5 @@ public class RentPaymentsTab extends AbstractTab {
         table.getColumns().addAll(dateColumn,numberColumn,paymentColumn,unitColumn,sumColumn);
         return table;
     }
+
 }

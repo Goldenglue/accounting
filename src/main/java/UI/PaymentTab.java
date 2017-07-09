@@ -16,6 +16,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 
 
 public class PaymentTab extends AbstractTab {
@@ -35,6 +36,7 @@ public class PaymentTab extends AbstractTab {
         this.setText("Платежи");
         this.setClosable(false);
     }
+
 
     @Override
     protected TableView<Payment> setTableUp() {
@@ -122,11 +124,7 @@ public class PaymentTab extends AbstractTab {
             while (resultSet.next()) {
                 observableList.add(new Payment(resultSet.getDate(1).toLocalDate(), resultSet.getInt(2),
                         resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5), resultSet.getInt(6)));
-                observableList.sort((o1, o2) -> {
-                    Payment payment1 = ((Payment) o1);
-                    Payment payment2 = ((Payment) o2);
-                    return payment1.getID() - payment2.getID();
-                });
+                observableList.sort(Comparator.comparingInt(Payment::getID));
             }
         } catch (SQLException e) {
             e.printStackTrace();
