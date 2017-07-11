@@ -1,28 +1,47 @@
 package database;
 
 import UI.PaymentTab;
-import org.jetbrains.annotations.Nullable;
+import org.h2.tools.RunScript;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.*;
 import java.time.format.DateTimeFormatter;
 
 public class DataProcessing {
     private static Connection connection;
 
-    public static void connectToDatabase() {
+    public static void connectToDatabase() throws SQLException {
         try {
             Class.forName("org.h2.Driver").newInstance();
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         try {
-            connection = DriverManager.getConnection("jdbc:h2:~/data", "", "");
+            connection = DriverManager.getConnection("jdbc:h2:~/accounting/data", "", "");
+            initDatabase();
             System.out.println("Database connection successful");
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
+    private static void initDatabase() {
+        Path path = Paths.get(System.getProperty("user.home"),"accounting","init.sql");
+        BufferedReader reader1 = null;
+        try {
+            reader1 = Files.newBufferedReader(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            RunScript.execute(connection, reader1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static int insertPaymentIntoDatabase(PaymentTab.Payment payment) {
         try {
@@ -94,7 +113,6 @@ public class DataProcessing {
 
     }
 
-    @Nullable
     public static ResultSet getPaymentsData() {
         Statement statement;
 

@@ -2,11 +2,9 @@
   <library name="com.h2database:h2:1.4.196" type="repository">
     <properties maven-id="com.h2database:h2:1.4.196" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/h2-1.4.196.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2/1.4.196/h2-1.4.196.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/h2-1.4.196-sources.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>
