@@ -20,16 +20,17 @@ public class DataProcessing {
             e.printStackTrace();
         }
         try {
-            connection = DriverManager.getConnection("jdbc:h2:~/accounting/data", "", "");
-            initDatabase();
+            connection = DriverManager.getConnection("jdbc:h2:~/accounting/data;ifexists=true", "", "");
             System.out.println("Database connection successful");
         } catch (SQLException e) {
-            e.printStackTrace();
+            connection = DriverManager.getConnection("jdbc:h2:~/accounting/data;create=true", "", "");
+            initDatabase();
+            System.out.println("Created new database");
         }
     }
 
     private static void initDatabase() {
-        Path path = Paths.get(System.getProperty("user.home"),"accounting","init.sql");
+        Path path = Paths.get("init.sql");
         BufferedReader reader1 = null;
         try {
             reader1 = Files.newBufferedReader(path);

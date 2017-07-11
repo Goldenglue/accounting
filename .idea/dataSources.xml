@@ -5,7 +5,7 @@
       <driver-ref>h2.unified</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.h2.Driver</jdbc-driver>
-      <jdbc-url>jdbc:h2:~/accounting/data</jdbc-url>
+      <jdbc-url>jdbc:h2:~/accounting/data;create=true</jdbc-url>
     </data-source>
   </component>
 </project>
