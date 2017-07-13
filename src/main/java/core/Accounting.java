@@ -6,12 +6,14 @@ import javafx.stage.Stage;
 
 import java.io.InputStream;
 import java.sql.SQLException;
+import java.time.LocalDate;
 
 public class Accounting extends Application {
 
     public static void main(String[] args) {
         try {
             DataProcessing.connectToDatabase();
+            DataProcessing.createTableBasedOnLocalDate(LocalDate.now());
         } catch (SQLException e) {
             e.printStackTrace();
         }

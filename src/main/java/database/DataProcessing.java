@@ -8,7 +8,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 public class DataProcessing {
     private static Connection connection;
@@ -42,6 +44,15 @@ public class DataProcessing {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void createTableBasedOnLocalDate(LocalDate date) throws SQLException {
+        Statement statement;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM_yyyy", new Locale("en"));
+        String query = "CREATE TABLE IF NOT EXISTS " + formatter.format(date);
+        statement = connection.createStatement();
+        statement.execute(query);
+
     }
 
     public static int insertPaymentIntoDatabase(PaymentTab.Payment payment) {

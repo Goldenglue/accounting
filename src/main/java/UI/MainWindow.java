@@ -1,5 +1,6 @@
 package UI;
 
+import com.sun.javafx.css.Size;
 import javafx.scene.Scene;
 import javafx.scene.control.TabPane;
 import javafx.stage.Stage;
@@ -22,7 +23,7 @@ public class MainWindow {
         primaryStage.setTitle("Учет");
         TabPane tabPane = new TabPane();
         tabPane.getTabs().addAll(paymentTab, rentPaymentsTab, mechanismsPaymentTab, cabinsPaymentsTab);
-        Scene scene = new Scene(tabPane, 1000, 500);
+        Scene scene = new Scene(tabPane);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
