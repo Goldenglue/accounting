@@ -29,7 +29,7 @@ public class DataProcessing {
         }
     }
 
-    private static void initDatabase() {
+    private static void initDatabase() throws SQLException {
         Path path = Paths.get("init.sql");
         BufferedReader reader1 = null;
         try {
@@ -99,19 +99,15 @@ public class DataProcessing {
     public static void deletePaymentFromDatabase(PaymentTab.Payment payment) {
         PreparedStatement preparedDeleteStatement;
 
-        String deleteStatement = "DELETE FROM ACCOUNTING.PAYMENTS WHERE NUMBER = ? AND PAYMENT = ? AND AMOUNT = ?";
+        String deleteStatement = "DELETE FROM ACCOUNTING.PAYMENTS WHERE ID = ?";
 
         try {
             preparedDeleteStatement = connection.prepareStatement(deleteStatement);
-            preparedDeleteStatement.setInt(1, payment.getNumber());
-            preparedDeleteStatement.setString(2, payment.getPayment());
-            preparedDeleteStatement.setInt(3, payment.getSum());
+            preparedDeleteStatement.setInt(1, payment.getID());
             preparedDeleteStatement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-
     }
 
     public static ResultSet getPaymentsData() {
@@ -125,6 +121,18 @@ public class DataProcessing {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    public static void backupDatabase() {
+        try {
+            Statement statement = connection.createStatement();
+
+            statement.execute("SCRIPT NODATA TO 'init.sql'");
+
+            statement.execute("SCRIPT TO 'backup.sql'");
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

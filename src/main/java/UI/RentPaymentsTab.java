@@ -61,7 +61,7 @@ public class RentPaymentsTab extends AbstractTab {
         sumColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         sumColumn.setPrefWidth(60);
 
-        table.setItems(observableList.filtered(item -> item.getType().equals("Аренда")));
+        table.setItems(paymentObservableList.filtered(item -> item.getType().equals("Аренда")));
         table.getColumns().addAll(dateColumn,numberColumn,paymentColumn,unitColumn,sumColumn);
         return table;
     }

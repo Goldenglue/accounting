@@ -112,7 +112,7 @@ public class PaymentTab extends AbstractTab {
         });
         sumColumn.setPrefWidth(60);
 
-        table.setItems(observableList);
+        table.setItems(paymentObservableList);
         table.getColumns().addAll(dateColumn, numberColumn, paymentColumn, unitColumn, sumColumn);
         return table;
     }
@@ -122,9 +122,9 @@ public class PaymentTab extends AbstractTab {
         ResultSet resultSet = DataProcessing.getPaymentsData();
         try {
             while (resultSet.next()) {
-                observableList.add(new Payment(resultSet.getDate(2).toLocalDate(), resultSet.getInt(3),
+                paymentObservableList.add(new Payment(resultSet.getDate(2).toLocalDate(), resultSet.getInt(3),
                         resultSet.getString(4), resultSet.getString(5), resultSet.getInt(6), resultSet.getInt(1)));
-                observableList.sort(Comparator.comparingInt(Payment::getID));
+                paymentObservableList.sort(Comparator.comparingInt(Payment::getID));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -164,7 +164,7 @@ public class PaymentTab extends AbstractTab {
             Payment payment = new Payment(datePicker.getValue(), Integer.parseInt(addNumber.getText()), addPayment.getText(),
                     typeComboBox.getValue(), Integer.parseInt(addSum.getText()));
             payment.setID(DataProcessing.insertPaymentIntoDatabase(payment));
-            observableList.add(payment);
+            paymentObservableList.add(payment);
             addNumber.clear();
             addPayment.clear();
             addSum.clear();
@@ -203,7 +203,7 @@ public class PaymentTab extends AbstractTab {
         private final SimpleIntegerProperty sum;
         private SimpleIntegerProperty ID;
 
-        public Payment(LocalDate date, int number, String payment, String type, int sum) {
+        Payment(LocalDate date, int number, String payment, String type, int sum) {
             this.date = new SimpleObjectProperty<>(date);
             this.number = new SimpleIntegerProperty(number);
             this.payment = new SimpleStringProperty(payment);
@@ -212,7 +212,7 @@ public class PaymentTab extends AbstractTab {
             this.ID = new SimpleIntegerProperty(0);
         }
 
-        public Payment(LocalDate date, int number, String payment, String type, int sum, int ID) {
+        Payment(LocalDate date, int number, String payment, String type, int sum, int ID) {
             this.date = new SimpleObjectProperty<>(date);
             this.number = new SimpleIntegerProperty(number);
             this.payment = new SimpleStringProperty(payment);
@@ -231,7 +231,6 @@ public class PaymentTab extends AbstractTab {
         }
 
         public void setID(int ID) {
-            System.out.println("THIS IS IT " + ID);
             this.ID.set(ID);
         }
 

@@ -60,7 +60,7 @@ public class MechanismsPaymentTab extends AbstractTab {
         sumColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         sumColumn.setPrefWidth(60);
 
-        table.setItems(observableList.filtered(item -> item.getType().equals("Механизм")));
+        table.setItems(paymentObservableList.filtered(item -> item.getType().equals("Механизм")));
         table.getColumns().addAll(dateColumn, numberColumn, paymentColumn, unitColumn, sumColumn);
         return table;
     }
