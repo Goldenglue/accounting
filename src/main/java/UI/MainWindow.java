@@ -1,6 +1,5 @@
 package UI;
 
-import com.sun.javafx.css.Size;
 import javafx.scene.Scene;
 import javafx.scene.control.TabPane;
 import javafx.stage.Stage;

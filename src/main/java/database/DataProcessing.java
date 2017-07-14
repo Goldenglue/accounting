@@ -12,7 +12,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class DataProcessing {
     private static Connection connection;
@@ -51,8 +50,8 @@ public class DataProcessing {
     public static void createTableBasedOnLocalDate(LocalDate date) throws SQLException {
         Statement statement = connection.createStatement();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM_yyyy");
-        //String tableName = formatter.format(date);
-        String tableName = "\"" + formatter.format(date) + "\"";
+        String tableName = formatter.format(date);
+        //String tableName = "\"" + formatter.format(date) + "\"";
         System.out.println(tableName);
 
         String query = "CREATE TABLE IF NOT EXISTS ACCOUNTING." + tableName + "("
@@ -74,11 +73,11 @@ public class DataProcessing {
 
     }
 
-    public static int insertPaymentIntoDatabase(PaymentTab.Payment payment) {
+    public static int insertPaymentIntoDatabase(PaymentTab.Payment payment, String period) {
         try {
             PreparedStatement preparedInsertStatement;
 
-            String insertStatement = "INSERT INTO ACCOUNTING.PAYMENTS(DATE, NUMBER, PAYMENT, TYPE, AMOUNT) VALUES" + "(?,?,?,?,?)";
+            String insertStatement = "INSERT INTO ACCOUNTING." + period + "(DATE, NUMBER, PAYMENT, TYPE, AMOUNT) VALUES" + "(?,?,?,?,?)";
 
             preparedInsertStatement = connection.prepareStatement(insertStatement, Statement.RETURN_GENERATED_KEYS);
 
@@ -108,11 +107,11 @@ public class DataProcessing {
         return 1;
     }
 
-    public static void updateValueInDatabase(PaymentTab.Payment payment) {
+    public static void updateValueInDatabase(PaymentTab.Payment payment, String period) {
         PreparedStatement preparedUpdateStatement;
 
         try {
-            preparedUpdateStatement = connection.prepareStatement("UPDATE ACCOUNTING.PAYMENTS SET DATE = ? , NUMBER = ?, PAYMENT = ?, TYPE = ?, AMOUNT = ? WHERE ID = ?");
+            preparedUpdateStatement = connection.prepareStatement("UPDATE ACCOUNTING." + period+ " SET DATE = ? , NUMBER = ?, PAYMENT = ?, TYPE = ?, AMOUNT = ? WHERE ID = ?");
             preparedUpdateStatement.setDate(1, Date.valueOf(payment.getDate()));
             preparedUpdateStatement.setInt(2, payment.getNumber());
             preparedUpdateStatement.setString(3, payment.getPayment());
@@ -126,10 +125,10 @@ public class DataProcessing {
         }
     }
 
-    public static void deletePaymentFromDatabase(PaymentTab.Payment payment) {
+    public static void deletePaymentFromDatabase(PaymentTab.Payment payment, String period) {
         PreparedStatement preparedDeleteStatement;
 
-        String deleteStatement = "DELETE FROM ACCOUNTING.PAYMENTS WHERE ID = ?";
+        String deleteStatement = "DELETE FROM ACCOUNTING." + period +" WHERE ID = ?";
 
         try {
             preparedDeleteStatement = connection.prepareStatement(deleteStatement);

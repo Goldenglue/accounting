@@ -65,4 +65,6 @@ public class RentPaymentsTab extends AbstractTab {
         table.getColumns().addAll(dateColumn,numberColumn,paymentColumn,unitColumn,sumColumn);
         return table;
     }
+
+
 }

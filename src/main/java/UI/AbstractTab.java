@@ -8,7 +8,7 @@ import javafx.scene.control.TableView;
 
 abstract class AbstractTab extends Tab {
     TableView table;
-    ObservableList<PaymentTab.Payment> paymentObservableList = FXCollections.observableArrayList();
+    static ObservableList<PaymentTab.Payment> paymentObservableList = FXCollections.observableArrayList();
 
     protected abstract TableView setTableUp();
 
