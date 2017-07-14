@@ -12,7 +12,7 @@ abstract class AbstractTab extends Tab {
 
     protected abstract TableView setTableUp();
 
-    protected void loadFromDatabase() {}
+    protected void loadFromDatabase(String period) {}
 
     protected void createGUI() {}
 

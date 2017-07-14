@@ -29,7 +29,6 @@ public class PaymentTab extends AbstractTab {
     private TableColumn<Payment, Integer> sumColumn;
 
     PaymentTab() {
-        loadFromDatabase();
         table = setTableUp();
         createGUI();
         this.setContent(vBox);
@@ -118,8 +117,8 @@ public class PaymentTab extends AbstractTab {
     }
 
     @Override
-    protected void loadFromDatabase() {
-        ResultSet resultSet = DataProcessing.getPaymentsData();
+    protected void loadFromDatabase(String period) {
+        ResultSet resultSet = DataProcessing.getPaymentsData(period);
         try {
             while (resultSet.next()) {
                 paymentObservableList.add(new Payment(resultSet.getDate(2).toLocalDate(), resultSet.getInt(3),
@@ -133,10 +132,21 @@ public class PaymentTab extends AbstractTab {
 
     @Override
     protected void createGUI() {
+        final ComboBox<String> periodComboBox = new ComboBox<>();
+        periodComboBox.getItems().addAll(DataProcessing.getAvailableTableNames());
+        periodComboBox.setEditable(false);
+        periodComboBox.setPrefWidth(100);
+
+        final Button choosePeriod =  new Button("Выбрать месяц");
+        choosePeriod.setOnAction(action -> {
+            loadFromDatabase(periodComboBox.getValue());
+        });
+
+        HBox selectionBox = new HBox();
+        selectionBox.getChildren().addAll(periodComboBox, choosePeriod);
 
         DatePicker datePicker = new DatePicker(LocalDate.now());
         datePicker.setMaxWidth(dateColumn.getPrefWidth());
-
 
         final TextField addNumber = new TextField();
         addNumber.setPrefWidth(numberColumn.getPrefWidth());
@@ -190,7 +200,7 @@ public class PaymentTab extends AbstractTab {
 
         vBox.setSpacing(5);
         vBox.setPadding(new Insets(10, 0, 0, 10));
-        vBox.getChildren().addAll(table, hBox);
+        vBox.getChildren().addAll(selectionBox, table, hBox);
 
 
     }

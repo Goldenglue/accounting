@@ -10,6 +10,8 @@ import java.nio.file.Paths;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class DataProcessing {
@@ -47,11 +49,28 @@ public class DataProcessing {
     }
 
     public static void createTableBasedOnLocalDate(LocalDate date) throws SQLException {
-        Statement statement;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM_yyyy", new Locale("en"));
-        String query = "CREATE TABLE IF NOT EXISTS " + formatter.format(date);
-        statement = connection.createStatement();
-        statement.execute(query);
+        Statement statement = connection.createStatement();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM_yyyy");
+        //String tableName = formatter.format(date);
+        String tableName = "\"" + formatter.format(date) + "\"";
+        System.out.println(tableName);
+
+        String query = "CREATE TABLE IF NOT EXISTS ACCOUNTING." + tableName + "("
+                + "ID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,"
+                + "DATE DATE NOT NULL ,"
+                + "NUMBER INT NOT NULL,"
+                + "PAYMENT VARCHAR(256) NOT NULL,"
+                + "TYPE VARCHAR(45) NOT NULL,"
+                + "AMOUNT  INT NOT NULL"
+                + ")";
+        //String query1 = "CREATE UNIQUE INDEX IF NOT EXISTS " + tableName + "_ID_uindex ON ACCOUNTING." + tableName + "(ID)";
+
+        connection.setAutoCommit(false);
+        // Statement statement1 = connection.createStatement();
+        System.out.println(statement.executeUpdate(query));
+        //statement1.executeUpdate(query1);
+        connection.commit();
+        connection.setAutoCommit(true);
 
     }
 
@@ -121,14 +140,32 @@ public class DataProcessing {
         }
     }
 
-    public static ResultSet getPaymentsData() {
-        Statement statement;
+    public static List<String> getAvailableTableNames() {
+        List<String> names = new ArrayList<>();
+        try {
+            Statement statement = connection.createStatement();
+            ResultSet set = statement.executeQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'ACCOUNTING'");
+            while (set.next()) {
+                String string = set.getString(1);
+                string = string.replaceAll("\'", "");
+                System.out.println(string);
+                if (!(string.equals("PAYMENTS"))) {
+                    names.add(string);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return names;
+    }
 
-        String query = "SELECT * FROM ACCOUNTING.PAYMENTS";
+    public static ResultSet getPaymentsData(String period) {
+        Statement selectDataStatement;
+        String query = "SELECT * FROM ACCOUNTING." + "\"" + period + "\"";
 
         try {
-            statement = connection.createStatement();
-            return statement.executeQuery(query);
+            selectDataStatement = connection.createStatement();
+            return selectDataStatement.executeQuery(query);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
