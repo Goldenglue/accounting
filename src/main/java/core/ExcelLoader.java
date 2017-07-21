@@ -23,7 +23,7 @@ public class ExcelLoader {
             for (int i = 2; i < 271 ; i++) {
                 Cell cell = dataSheet.getRow(i).getCell(6);
                 if (cell.getCellTypeEnum() == CellType.STRING) {
-                    DataProcessing.insertRentorIntoDatabase(cell.getStringCellValue());
+                    DataProcessing.insertRenterIntoDatabase(cell.getStringCellValue());
                 }
             }
             System.out.println("end");
@@ -57,7 +57,7 @@ public class ExcelLoader {
                     set.add(cell.getStringCellValue());
                 }
             }
-            set.forEach(DataProcessing::insertRentorIntoDatabase);
+            set.forEach(DataProcessing::insertRenterIntoDatabase);
             System.out.println("end");
         } catch (IOException e) {
             e.printStackTrace();

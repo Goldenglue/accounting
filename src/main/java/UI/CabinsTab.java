@@ -21,7 +21,7 @@ import java.time.format.DateTimeFormatter;
 /**
  * Created by IvanOP on 13.07.2017.
  */
-public class CabinsPaymentsTab extends AbstractTab {
+public class CabinsTab extends AbstractTab {
     private final HBox hBox = new HBox();
     private final VBox vBox = new VBox();
     private ObservableList<Cabin> cabinObservableList = FXCollections.observableArrayList();
@@ -37,7 +37,7 @@ public class CabinsPaymentsTab extends AbstractTab {
     private TableColumn<Cabin, String> additionalInfoColumn;
 
 
-    CabinsPaymentsTab() {
+    CabinsTab() {
         table = setTableUp();
         createGUI();
         setContent(vBox);

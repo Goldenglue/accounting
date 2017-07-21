@@ -9,19 +9,19 @@ public class MainWindow {
     private static PaymentTab paymentTab;
     private static RentPaymentsTab rentPaymentsTab;
     private static MechanismsPaymentTab mechanismsPaymentTab;
-    private static CabinsPaymentsTab cabinsPaymentsTab;
+    private static CabinsTab cabinsTab;
 
     static {
         paymentTab = getPaymentsTab();
         rentPaymentsTab = getRentPaymentsTab();
         mechanismsPaymentTab = getMechanismsTab();
-        cabinsPaymentsTab = getCabinsPaymentsTab();
+        cabinsTab = getCabinsTab();
     }
 
     public static void launch(Stage primaryStage) {
         primaryStage.setTitle("Учет");
         TabPane tabPane = new TabPane();
-        tabPane.getTabs().addAll(paymentTab, rentPaymentsTab, mechanismsPaymentTab, cabinsPaymentsTab);
+        tabPane.getTabs().addAll(paymentTab, rentPaymentsTab, mechanismsPaymentTab, cabinsTab);
         Scene scene = new Scene(tabPane);
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -39,8 +39,8 @@ public class MainWindow {
         return new MechanismsPaymentTab();
     }
 
-    private static CabinsPaymentsTab getCabinsPaymentsTab() {
-        return new CabinsPaymentsTab();
+    private static CabinsTab getCabinsTab() {
+        return new CabinsTab();
     }
 
 }

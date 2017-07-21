@@ -104,9 +104,9 @@ public class DataProcessing {
         return 1;
     }
 
-    public static void insertRentorIntoDatabase(String info) {
+    public static void insertRenterIntoDatabase(String info) {
         try {
-            PreparedStatement statement = connection.prepareStatement("INSERT INTO RENTORS.RENTORS_INFO(RENTOR) VALUES(?)");
+            PreparedStatement statement = connection.prepareStatement("INSERT INTO RENTERS.RENTERS_INFO(RENTER) VALUES(?)");
             statement.setString(1,info);
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -118,7 +118,7 @@ public class DataProcessing {
         List<String> renters = new ArrayList<>();
         try {
             Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT RENTOR FROM RENTORS.RENTORS_INFO");
+            ResultSet resultSet = statement.executeQuery("SELECT RENTER FROM RENTERS.RENTERS_INFO");
             while (resultSet.next()) {
                 renters.add(resultSet.getString(1));
             }
@@ -128,7 +128,7 @@ public class DataProcessing {
         return renters;
     }
 
-    public static void updateValueInDatabase(PaymentTab.Payment payment, String period) {
+    public static void updatePayment(PaymentTab.Payment payment, String period) {
         PreparedStatement preparedUpdateStatement;
 
         try {
@@ -161,7 +161,7 @@ public class DataProcessing {
         }
     }
 
-    public static List<String> getAvailableTableNames() {
+    public static List<String> getAvailableTableNamesForPayments() {
         List<String> names = new ArrayList<>();
         try {
             Statement statement = connection.createStatement();
@@ -175,7 +175,7 @@ public class DataProcessing {
         return names;
     }
 
-    public static ResultSet getPaymentsData(String period) {
+    public static ResultSet getPaymentsDataFromCertainPeriod(String period) {
         Statement selectDataStatement;
         String query = "SELECT * FROM PAYMENTS." + "\"" + period + "\"";
 

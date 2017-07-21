@@ -17,7 +17,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -53,7 +52,7 @@ public class PaymentTab extends AbstractTab {
             editCommit.getTableView().getItems()
                     .get(editCommit.getTablePosition().getRow())
                     .setDate(editCommit.getNewValue());
-            DataProcessing.updateValueInDatabase(editCommit.getTableView().getItems().get(editCommit.getTablePosition().getRow()), periodComboBox.getValue());
+            DataProcessing.updatePayment(editCommit.getTableView().getItems().get(editCommit.getTablePosition().getRow()), periodComboBox.getValue());
         });
         dateColumn.setEditable(true);
         dateColumn.setPrefWidth(100);
@@ -76,7 +75,7 @@ public class PaymentTab extends AbstractTab {
             t.getTableView().getItems()
                     .get(t.getTablePosition().getRow())
                     .setNumber(t.getNewValue());
-            DataProcessing.updateValueInDatabase(t.getTableView().getItems().get(t.getTablePosition().getRow()), periodComboBox.getValue());
+            DataProcessing.updatePayment(t.getTableView().getItems().get(t.getTablePosition().getRow()), periodComboBox.getValue());
         });
         numberColumn.setPrefWidth(60);
 
@@ -88,7 +87,7 @@ public class PaymentTab extends AbstractTab {
             t.getTableView().getItems()
                     .get(t.getTablePosition().getRow())
                     .setPayment(t.getNewValue());
-            DataProcessing.updateValueInDatabase(t.getTableView().getItems().get(t.getTablePosition().getRow()), periodComboBox.getValue());
+            DataProcessing.updatePayment(t.getTableView().getItems().get(t.getTablePosition().getRow()), periodComboBox.getValue());
         });
 
         unitColumn = new TableColumn<>("Тип");
@@ -98,7 +97,7 @@ public class PaymentTab extends AbstractTab {
             t.getTableView().getItems()
                     .get(t.getTablePosition().getRow())
                     .setType(t.getNewValue());
-            DataProcessing.updateValueInDatabase(t.getTableView().getItems().get(t.getTablePosition().getRow()), periodComboBox.getValue());
+            DataProcessing.updatePayment(t.getTableView().getItems().get(t.getTablePosition().getRow()), periodComboBox.getValue());
         });
 
         unitColumn.setPrefWidth(90);
@@ -110,7 +109,7 @@ public class PaymentTab extends AbstractTab {
             t.getTableView().getItems()
                     .get(t.getTablePosition().getRow())
                     .setSum(t.getNewValue());
-            DataProcessing.updateValueInDatabase(t.getTableView().getItems().get(t.getTablePosition().getRow()), periodComboBox.getValue());
+            DataProcessing.updatePayment(t.getTableView().getItems().get(t.getTablePosition().getRow()), periodComboBox.getValue());
         });
         sumColumn.setPrefWidth(60);
 
@@ -121,7 +120,7 @@ public class PaymentTab extends AbstractTab {
 
     @Override
     protected void loadFromDatabase(String period) {
-        ResultSet resultSet = DataProcessing.getPaymentsData(period);
+        ResultSet resultSet = DataProcessing.getPaymentsDataFromCertainPeriod(period);
         try {
             while (resultSet.next()) {
                 paymentObservableList.add(new Payment(resultSet.getDate(2).toLocalDate(), resultSet.getInt(3),
@@ -137,7 +136,7 @@ public class PaymentTab extends AbstractTab {
     protected void createGUI() {
 
         periodComboBox = new ComboBox<>();
-        periodComboBox.getItems().addAll(DataProcessing.getAvailableTableNames());
+        periodComboBox.getItems().addAll(DataProcessing.getAvailableTableNamesForPayments());
         periodComboBox.setEditable(false);
         periodComboBox.setPrefWidth(100);
 
