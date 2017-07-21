@@ -15,7 +15,6 @@
       <element id="archive" name="Accounting.jar">
         <element id="module-output" name="accounting_main" />
       </element>
-      <element id="library" level="project" name="com.h2database:h2:1.4.196" />
       <element id="file-copy" path="$PROJECT_DIR$/init.sql" />
     </root>
   </artifact>

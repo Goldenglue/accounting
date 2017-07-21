@@ -5,6 +5,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
+import javafx.geometry.Side;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
@@ -16,7 +17,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 
 public class PaymentTab extends AbstractTab {
@@ -43,7 +46,6 @@ public class PaymentTab extends AbstractTab {
 
         TableView<Payment> table = new TableView<>();
         table.setEditable(true);
-
         dateColumn = new TableColumn<>("Дата");
         dateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
         dateColumn.setCellFactory(column -> new LocalDateCellFactory());
@@ -139,8 +141,9 @@ public class PaymentTab extends AbstractTab {
         periodComboBox.setEditable(false);
         periodComboBox.setPrefWidth(100);
 
-        final Button choosePeriod =  new Button("Выбрать месяц");
+        final Button choosePeriod = new Button("Выбрать месяц");
         choosePeriod.setOnAction(action -> {
+            paymentObservableList.clear();
             loadFromDatabase(periodComboBox.getValue());
         });
 
@@ -154,9 +157,30 @@ public class PaymentTab extends AbstractTab {
         addNumber.setPrefWidth(numberColumn.getPrefWidth());
         addNumber.setPromptText("№ п/п");
 
+        List<String> info = new ArrayList<>();
+        info.add("first");
+        info.add("second");
+        info.add("third");
+        info.add("fourth");
+        info.add("fifth");
+
+        ContextMenu infoMenu = new ContextMenu();
+
         final TextField addPayment = new TextField();
         addPayment.setPrefWidth(paymentColumn.getPrefWidth());
         addPayment.setPromptText("Платеж");
+        addPayment.setContextMenu(infoMenu);
+        addPayment.setOnKeyReleased(event -> {
+            infoMenu.getItems().clear();
+            info.stream()
+                    .filter(item -> item.contains(addPayment.getText()))
+                    .forEach(infoItem -> {
+                        MenuItem menuItem = new MenuItem(infoItem);
+                        menuItem.setOnAction(action -> addPayment.setText(infoItem));
+                        infoMenu.getItems().add(menuItem);
+                    });
+            infoMenu.show(addPayment, Side.BOTTOM, 0, 0);
+        });
 
         final ComboBox<String> typeComboBox = new ComboBox<>();
         typeComboBox.getItems().addAll(
@@ -204,8 +228,8 @@ public class PaymentTab extends AbstractTab {
         vBox.setPadding(new Insets(10, 0, 0, 10));
         vBox.getChildren().addAll(selectionBox, table, hBox);
 
-
     }
+
 
     public static class Payment {
         private final SimpleObjectProperty<LocalDate> date;
