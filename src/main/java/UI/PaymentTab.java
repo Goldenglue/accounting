@@ -157,12 +157,7 @@ public class PaymentTab extends AbstractTab {
         addNumber.setPrefWidth(numberColumn.getPrefWidth());
         addNumber.setPromptText("№ п/п");
 
-        List<String> info = new ArrayList<>();
-        info.add("first");
-        info.add("second");
-        info.add("third");
-        info.add("fourth");
-        info.add("fifth");
+        List<String> info = DataProcessing.getRenters();
 
         ContextMenu infoMenu = new ContextMenu();
 
@@ -173,7 +168,8 @@ public class PaymentTab extends AbstractTab {
         addPayment.setOnKeyReleased(event -> {
             infoMenu.getItems().clear();
             info.stream()
-                    .filter(item -> item.contains(addPayment.getText()))
+                    .filter(item -> item.toLowerCase().contains(addPayment.getText()))
+                    .limit(10)
                     .forEach(infoItem -> {
                         MenuItem menuItem = new MenuItem(infoItem);
                         menuItem.setOnAction(action -> addPayment.setText(infoItem));

@@ -17,6 +17,7 @@ public class Accounting extends Application {
         try {
             DataProcessing.connectToDatabase();
             DataProcessing.createTableBasedOnLocalDate(LocalDate.now());
+            //ExcelLoader.load();
         } catch (SQLException e) {
             e.printStackTrace();
         }

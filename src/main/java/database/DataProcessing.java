@@ -104,6 +104,30 @@ public class DataProcessing {
         return 1;
     }
 
+    public static void insertRentorIntoDatabase(String info) {
+        try {
+            PreparedStatement statement = connection.prepareStatement("INSERT INTO RENTORS.RENTORS_INFO(RENTOR) VALUES(?)");
+            statement.setString(1,info);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static List<String> getRenters() {
+        List<String> renters = new ArrayList<>();
+        try {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT RENTOR FROM RENTORS.RENTORS_INFO");
+            while (resultSet.next()) {
+                renters.add(resultSet.getString(1));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return renters;
+    }
+
     public static void updateValueInDatabase(PaymentTab.Payment payment, String period) {
         PreparedStatement preparedUpdateStatement;
 
