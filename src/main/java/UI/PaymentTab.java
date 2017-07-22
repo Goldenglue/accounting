@@ -120,7 +120,7 @@ public class PaymentTab extends AbstractTab {
 
     @Override
     protected void loadFromDatabase(String period) {
-        ResultSet resultSet = DataProcessing.getPaymentsDataFromCertainPeriod(period);
+        ResultSet resultSet = DataProcessing.getDataFromTable(period,"PAYMENTS" );
         try {
             while (resultSet.next()) {
                 paymentObservableList.add(new Payment(resultSet.getDate(2).toLocalDate(), resultSet.getInt(3),
@@ -136,7 +136,7 @@ public class PaymentTab extends AbstractTab {
     protected void createGUI() {
 
         periodComboBox = new ComboBox<>();
-        periodComboBox.getItems().addAll(DataProcessing.getAvailableTableNamesForPayments());
+        periodComboBox.getItems().addAll(DataProcessing.getAvailableTableNames("PAYMENTS"));
         periodComboBox.setEditable(false);
         periodComboBox.setPrefWidth(100);
 
@@ -167,7 +167,7 @@ public class PaymentTab extends AbstractTab {
         addPayment.setOnKeyReleased(event -> {
             infoMenu.getItems().clear();
             info.stream()
-                    .filter(item -> item.toLowerCase().contains(addPayment.getText()))
+                    .filter(item -> item.toLowerCase().contains(addPayment.getText()) || item.contains(addPayment.getText()))
                     .limit(10)
                     .forEach(infoItem -> {
                         MenuItem menuItem = new MenuItem(infoItem);

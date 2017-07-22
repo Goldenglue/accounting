@@ -75,7 +75,7 @@ public class DataProcessing {
         try {
             PreparedStatement preparedInsertStatement;
 
-            String insertStatement = "INSERT INTO PAYMENTS." + period + "(DATE, NUMBER, PAYMENT, TYPE, AMOUNT) VALUES" + "(?,?,?,?,?)";
+            String insertStatement = "INSERT INTO PAYMENTS." + period + "(DATE, NUMBER, PAYMENT, TYPE, AMOUNT) VALUES(?,?,?,?,?)";
 
             preparedInsertStatement = connection.prepareStatement(insertStatement, Statement.RETURN_GENERATED_KEYS);
 
@@ -161,11 +161,12 @@ public class DataProcessing {
         }
     }
 
-    public static List<String> getAvailableTableNamesForPayments() {
+    public static List<String> getAvailableTableNames(String tableType) {
         List<String> names = new ArrayList<>();
         try {
-            Statement statement = connection.createStatement();
-            ResultSet set = statement.executeQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PAYMENTS'");
+            PreparedStatement statement = connection.prepareStatement("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ?");
+            statement.setString(1,tableType);
+            ResultSet set = statement.executeQuery();
             while (set.next()) {
                 names.add(set.getString(1));
             }
@@ -175,9 +176,9 @@ public class DataProcessing {
         return names;
     }
 
-    public static ResultSet getPaymentsDataFromCertainPeriod(String period) {
+    public static ResultSet getDataFromTable(String table, String schema) {
         Statement selectDataStatement;
-        String query = "SELECT * FROM PAYMENTS." + "\"" + period + "\"";
+        String query = "SELECT * FROM " + schema + "." + table;
 
         try {
             selectDataStatement = connection.createStatement();
