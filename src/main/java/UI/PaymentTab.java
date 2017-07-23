@@ -9,14 +9,18 @@ import javafx.geometry.Side;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.Pair;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -113,6 +117,8 @@ public class PaymentTab extends AbstractTab {
         });
         sumColumn.setPrefWidth(60);
 
+
+        //DataProcessing.matchRenterWithCabins();
         table.setItems(paymentObservableList);
         table.getColumns().addAll(dateColumn, numberColumn, paymentColumn, unitColumn, sumColumn);
         return table;
@@ -192,10 +198,11 @@ public class PaymentTab extends AbstractTab {
 
         final Button addButton = new Button("Добавить");
         addButton.setOnAction(action -> {
-            Payment payment = new Payment(datePicker.getValue(), Integer.parseInt(addNumber.getText()), addPayment.getText(),
+            /*Payment payment = new Payment(datePicker.getValue(), Integer.parseInt(addNumber.getText()), addPayment.getText(),
                     typeComboBox.getValue(), Integer.parseInt(addSum.getText()));
-            payment.setID(DataProcessing.insertPaymentIntoDatabase(payment, periodComboBox.getValue()));
-            paymentObservableList.add(payment);
+            payment.setID(DataProcessing.insertPaymentIntoDatabase(payment, periodComboBox.getValue()));*/
+            createPaymentDialog(addPayment.getText());
+            /*paymentObservableList.add(payment);*/
             addNumber.clear();
             addPayment.clear();
             addSum.clear();
@@ -225,6 +232,42 @@ public class PaymentTab extends AbstractTab {
 
     }
 
+    private void createPaymentDialog(String renter) {
+        List<Integer> cabins = new ArrayList<>();
+        cabins.addAll(Arrays.asList(DataProcessing.getRentedCabins(renter)));
+        System.out.println(cabins);
+
+        Dialog<Pair<String, String>> dialog =  new Dialog<>();
+        dialog.setTitle("Платеж");
+
+        ButtonType payType = new ButtonType("Pay", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(payType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        List<TextField> textFields = new ArrayList<>();
+        List<Button> buttons = new ArrayList<>();
+
+        cabins.forEach(cabin -> {
+            Button button = new Button(cabin.toString());
+            buttons.add(button);
+            TextField text = new TextField();
+            textFields.add(text);
+            grid.add(text,0,textFields.size() - 1);
+            grid.add(button,1,buttons.size() - 1);
+
+        });
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.show();
+
+        Button pay = new Button("Оплатить");
+        Button cancel = new Button("Отмена");
+    }
 
     public static class Payment {
         private final SimpleObjectProperty<LocalDate> date;

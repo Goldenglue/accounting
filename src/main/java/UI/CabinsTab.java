@@ -133,7 +133,7 @@ public class CabinsTab extends AbstractTab {
         /*cabinObservableList.forEach(cabin -> {
             DataProcessing.insertCabinIntoDatabase(cabin,"040_043_ИЮЛ_2017");
         });*/
-        DataProcessing.matchRenterWithCabins();
+        //DataProcessing.matchRenterWithCabins();
         table.setItems(cabinObservableList);
         table.getColumns().addAll(numberColumn, nameColumn, rentPriceColumn, currentPaymentColumn, inventoryPriceColumn, transferDateColumn, landlordInfoColumn, paymentDateColumn, isPaidColumn, additionalInfoColumn);
         return table;

@@ -12,10 +12,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
-import java.sql.Date;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class DataProcessing {
     private static Connection connection;
@@ -246,29 +247,19 @@ public class DataProcessing {
             while (set.next()) {
                 tableNames.add(set.getString(1));
             }
-            /*System.out.println(rentersList);
-            System.out.println(tableNames);*/
-            /*ResultSet resultSet = st.executeQuery("SELECT NUMBER FROM CABINS." + tableNames.get(0) + " WHERE RENTER =" + "\'" + rentersList.get(0) + "\'");
-            while (resultSet.next()) {
-                System.out.println(resultSet.getString(1));
-            }*/
             rentersList.forEach(renter -> {
                 List<String> tempList = new ArrayList<>();
                 tableNames.forEach(table -> {
                     try {
                         ResultSet resultSet = st.executeQuery("SELECT NUMBER FROM CABINS." + table + " WHERE RENTER =" + "\'" + renter + "\'");
-                        Map<String, List<String>> temp = new TreeMap<>();
                         while (resultSet.next()) {
                             tempList.add(resultSet.getString(1));
                         }
-
-                        /*temp.put(renter, tempList);
-                        System.out.println(table + " in table " + temp);*/
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
                 });
-                PreparedStatement pst = null;
+                PreparedStatement pst;
                 try {
                     pst = connection.prepareStatement("UPDATE RENTERS.RENTERS_INFO SET RENTED_CABINS = ? WHERE RENTER = ?");
                     pst.setArray(1, connection.createArrayOf("VARCHAR", tempList.toArray()));
@@ -281,6 +272,27 @@ public class DataProcessing {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public static Integer[] getRentedCabins(String renter) {
+        try {
+            PreparedStatement st = connection.prepareStatement("SELECT RENTED_CABINS FROM RENTERS.RENTERS_INFO WHERE RENTER = ?");
+            st.setString(1, renter);
+            ResultSet set = st.executeQuery();
+            Array array = null;
+            while (set.next()) {
+                array = set.getArray(1);
+            }
+            Object[] objects = (Object[]) array.getArray();
+            Integer[] integers = new Integer[objects.length];
+            for (int i = 0; i < objects.length; i++) {
+                integers[i] = Integer.parseInt((String)objects[i]);
+            }
+            return integers;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }
