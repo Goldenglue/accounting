@@ -75,7 +75,7 @@ public class ExcelLoader {
             Workbook workbook = new XSSFWorkbook(excelFile);
 
             for (int i = 4; i < 5; i++) {
-                Sheet dataSheet = workbook.getSheetAt(i);
+                Sheet dataSheet = workbook.getSheetAt(10);
                 Iterator<Row> rowIterator = dataSheet.rowIterator();
                 while (rowIterator.hasNext()) {
                     Row row = rowIterator.next();

@@ -1,6 +1,5 @@
 package UI;
 
-import core.ExcelLoader;
 import database.DataProcessing;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -18,11 +17,11 @@ import javafx.scene.layout.VBox;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -118,7 +117,7 @@ public class CabinsTab extends AbstractTab {
         additionalInfoColumn.setEditable(true);
 
 
-        ExcelLoader.load();
+        //ExcelLoader.load();
         /*System.out.println(cabinObservableList.size());
         List<Cabin> temp = cabinObservableList.stream()
                 .filter(cabin -> 2 > cabinObservableList.stream()
@@ -131,6 +130,10 @@ public class CabinsTab extends AbstractTab {
         });
         cabinObservableList = FXCollections.observableList(temp);
         System.out.println(cabinObservableList.size());*/
+        /*cabinObservableList.forEach(cabin -> {
+            DataProcessing.insertCabinIntoDatabase(cabin,"040_043_ИЮЛ_2017");
+        });*/
+        DataProcessing.matchRenterWithCabins();
         table.setItems(cabinObservableList);
         table.getColumns().addAll(numberColumn, nameColumn, rentPriceColumn, currentPaymentColumn, inventoryPriceColumn, transferDateColumn, landlordInfoColumn, paymentDateColumn, isPaidColumn, additionalInfoColumn);
         return table;
@@ -141,16 +144,15 @@ public class CabinsTab extends AbstractTab {
         List<String> tables = DataProcessing.getAvailableTableNames("CABINS");
         final ComboBox<String> period = new ComboBox<>();
         period.getItems().addAll(tables.stream()
-                .map(s -> s.substring(s.length() - 8))
-                .map(s -> s.replaceAll("_"," "))
+                .map(s -> s.substring(0, 8))
+                .map(s -> s.replaceAll("_", " "))
                 .collect(Collectors.toSet())
         );
         period.setEditable(false);
         period.setPrefWidth(100);
-
         final ComboBox<String> types = new ComboBox<>();
         types.getItems().addAll(tables.stream()
-                .map(s -> s.substring(0,s.length() - 8))
+                .map(s -> s.substring(8, s.length()))
                 .map(s -> s.replaceAll("_", " "))
                 .collect(Collectors.toSet())
         );
@@ -159,7 +161,8 @@ public class CabinsTab extends AbstractTab {
 
         final Button selectPeriodTypes = new Button("Выбрать");
         selectPeriodTypes.setOnAction(event -> {
-
+            cabinObservableList.clear();
+            loadFromDatabase((period.getValue().replaceAll(" ", "_") + types.getValue().replaceAll(" ", " _")).replaceAll(" ", ""));
         });
 
         final TextField number = new TextField();
@@ -183,12 +186,30 @@ public class CabinsTab extends AbstractTab {
         hBox.getChildren().addAll(number, name, addButton);
         vBox.setSpacing(5);
         vBox.setPadding(new Insets(10, 0, 0, 10));
-        vBox.getChildren().addAll(selectionBox,table, hBox);
+        vBox.getChildren().addAll(selectionBox, table, hBox);
     }
 
     @Override
     protected void loadFromDatabase(String table) {
         ResultSet set = DataProcessing.getDataFromTable(table, "CABINS");
+        try {
+            while (set.next()) {
+                cabinObservableList.add(new Cabin(set.getInt(1),
+                        set.getInt(2),
+                        set.getString(3),
+                        set.getInt(4),
+                        set.getInt(5),
+                        set.getInt(6),
+                        set.getDate(7) != null ? set.getDate(7).toLocalDate() : null,
+                        set.getString(8),
+                        set.getBoolean(9),
+                        set.getInt(10),
+                        set.getString(11)));
+            }
+            cabinObservableList.sort(Comparator.comparingInt(Cabin::getNumber));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -208,11 +229,11 @@ public class CabinsTab extends AbstractTab {
 
         public Cabin(int number, String name) {
             this.number = new SimpleIntegerProperty(number);
-            this.name =  new SimpleStringProperty(name);
+            this.name = new SimpleStringProperty(name);
         }
 
 
-        Cabin(int ID, int number, String name, int rentPrice, int currentPaymentAmount, int inventoryPrice, LocalDate transferDate, String renter, int paymentDate, boolean isPaid, String additionalInfo) {
+        Cabin(int ID, int number, String name, int rentPrice, int currentPaymentAmount, int inventoryPrice, LocalDate transferDate, String renter, boolean isPaid, int paymentDate, String additionalInfo) {
             this.ID = new SimpleIntegerProperty(ID);
             this.number = new SimpleIntegerProperty(number);
             this.name = new SimpleStringProperty(name);
@@ -225,6 +246,7 @@ public class CabinsTab extends AbstractTab {
             this.isPaid = new SimpleBooleanProperty(isPaid);
             this.additionalInfo = new SimpleStringProperty(additionalInfo);
         }
+
         public Cabin(int number, String name, int rentPrice, int currentPaymentAmount, int inventoryPrice, LocalDate transferDate, String renter, int paymentDate, boolean isPaid, String additionalInfo) {
             this.number = new SimpleIntegerProperty(number);
             this.name = new SimpleStringProperty(name);
@@ -344,6 +366,43 @@ public class CabinsTab extends AbstractTab {
 
         public void setIsPaid(boolean isPaid) {
             this.isPaid.set(isPaid);
+        }
+
+
+        public String getSeries() {
+            return series.get();
+        }
+
+        public SimpleStringProperty seriesProperty() {
+            return series;
+        }
+
+        public void setSeries(String series) {
+            this.series.set(series);
+        }
+
+        public int getID() {
+            return ID.get();
+        }
+
+        public SimpleIntegerProperty IDProperty() {
+            return ID;
+        }
+
+        public void setID(int ID) {
+            this.ID.set(ID);
+        }
+
+        public String getAdditionalInfo() {
+            return additionalInfo.get();
+        }
+
+        public SimpleStringProperty additionalInfoProperty() {
+            return additionalInfo;
+        }
+
+        public void setAdditionalInfo(String additionalInfo) {
+            this.additionalInfo.set(additionalInfo);
         }
     }
 
