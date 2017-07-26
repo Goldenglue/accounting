@@ -20,6 +20,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -142,18 +143,18 @@ public class CabinsTab extends AbstractTab {
     @Override
     protected void createGUI() {
         List<String> tables = DataProcessing.getAvailableTableNames("CABINS");
-        final ComboBox<String> period = new ComboBox<>();
+        /*final ComboBox<String> period = new ComboBox<>();
         period.getItems().addAll(tables.stream()
                 .map(s -> s.substring(0, 8))
                 .map(s -> s.replaceAll("_", " "))
                 .collect(Collectors.toSet())
         );
         period.setEditable(false);
-        period.setPrefWidth(100);
+        period.setPrefWidth(100);*/
         final ComboBox<String> types = new ComboBox<>();
         types.getItems().addAll(tables.stream()
-                .map(s -> s.substring(8, s.length()))
                 .map(s -> s.replaceAll("_", " "))
+                .map(s -> s.replaceAll("CABINS", ""))
                 .collect(Collectors.toSet())
         );
         types.setEditable(false);
@@ -162,7 +163,7 @@ public class CabinsTab extends AbstractTab {
         final Button selectPeriodTypes = new Button("Выбрать");
         selectPeriodTypes.setOnAction(event -> {
             cabinObservableList.clear();
-            loadFromDatabase((period.getValue().replaceAll(" ", "_") + types.getValue().replaceAll(" ", " _")).replaceAll(" ", ""));
+            cabinObservableList.addAll(loadCabinsFromDatabase(("CABINS" + types.getValue().replaceAll(" ", " _")).replaceAll(" ", "")));
         });
 
         final TextField number = new TextField();
@@ -181,7 +182,7 @@ public class CabinsTab extends AbstractTab {
         addButton.setDefaultButton(true);
 
         HBox selectionBox = new HBox();
-        selectionBox.getChildren().addAll(period, types, selectPeriodTypes);
+        selectionBox.getChildren().addAll(types, selectPeriodTypes);
 
         hBox.getChildren().addAll(number, name, addButton);
         vBox.setSpacing(5);
@@ -189,12 +190,13 @@ public class CabinsTab extends AbstractTab {
         vBox.getChildren().addAll(selectionBox, table, hBox);
     }
 
-    @Override
-    protected void loadFromDatabase(String table) {
+    public static List<Cabin> loadCabinsFromDatabase(String table) {
         ResultSet set = DataProcessing.getDataFromTable(table, "CABINS");
+        List<Cabin> cabins = new ArrayList<>();
         try {
             while (set.next()) {
-                cabinObservableList.add(new Cabin(set.getInt(1),
+                Object[] objects = (Object[])set.getArray(10).getArray();
+                cabins.add(new Cabin(set.getInt(1),
                         set.getInt(2),
                         set.getString(3),
                         set.getInt(4),
@@ -203,14 +205,14 @@ public class CabinsTab extends AbstractTab {
                         set.getDate(7) != null ? set.getDate(7).toLocalDate() : null,
                         set.getString(8),
                         set.getBoolean(9),
-                        set.getInt(10),
+                        Integer.parseInt((String) objects[objects.length - 1]),
                         set.getString(11)));
             }
-            cabinObservableList.sort(Comparator.comparingInt(Cabin::getNumber));
+            cabins.sort(Comparator.comparingInt(Cabin::getNumber));
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
+        return cabins;
     }
 
     public static class Cabin {

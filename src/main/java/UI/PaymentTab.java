@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
 
 public class PaymentTab extends AbstractTab {
@@ -126,7 +128,8 @@ public class PaymentTab extends AbstractTab {
 
     @Override
     protected void loadFromDatabase(String period) {
-        ResultSet resultSet = DataProcessing.getDataFromTable(period,"PAYMENTS" );
+        ResultSet resultSet = DataProcessing.getDataFromTable(period, "PAYMENTS");
+
         try {
             while (resultSet.next()) {
                 paymentObservableList.add(new Payment(resultSet.getDate(2).toLocalDate(), resultSet.getInt(3),
@@ -140,7 +143,6 @@ public class PaymentTab extends AbstractTab {
 
     @Override
     protected void createGUI() {
-
         periodComboBox = new ComboBox<>();
         periodComboBox.getItems().addAll(DataProcessing.getAvailableTableNames("PAYMENTS"));
         periodComboBox.setEditable(false);
@@ -160,6 +162,10 @@ public class PaymentTab extends AbstractTab {
 
         final TextField addNumber = new TextField();
         addNumber.setPrefWidth(numberColumn.getPrefWidth());
+
+        long number = 5;
+        LongStream.range(2, number - 1)
+                .noneMatch(index -> index % number == 0);
         addNumber.setPromptText("№ п/п");
 
         List<String> info = DataProcessing.getRenters();
@@ -233,11 +239,10 @@ public class PaymentTab extends AbstractTab {
     }
 
     private void createPaymentDialog(String renter) {
-        List<Integer> cabins = new ArrayList<>();
-        cabins.addAll(Arrays.asList(DataProcessing.getRentedCabins(renter)));
-        System.out.println(cabins);
+        List<Integer> cabinsNumbers = new ArrayList<>();
+        cabinsNumbers.addAll(Arrays.asList(DataProcessing.getRentedCabins(renter)));
 
-        Dialog<Pair<String, String>> dialog =  new Dialog<>();
+        Dialog<Pair<String, String>> dialog = new Dialog<>();
         dialog.setTitle("Платеж");
 
         ButtonType payType = new ButtonType("Pay", ButtonBar.ButtonData.OK_DONE);
@@ -248,18 +253,33 @@ public class PaymentTab extends AbstractTab {
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
 
-        List<TextField> textFields = new ArrayList<>();
-        List<Button> buttons = new ArrayList<>();
+        List<CabinsTab.Cabin> cabins = cabinsNumbers.stream()
+                .map(integer -> DataProcessing.getCabinByRenterAndNumber(renter, integer))
+                .collect(Collectors.toList());
 
         cabins.forEach(cabin -> {
-            Button button = new Button(cabin.toString());
-            buttons.add(button);
-            TextField text = new TextField();
-            textFields.add(text);
-            grid.add(text,0,textFields.size() - 1);
-            grid.add(button,1,buttons.size() - 1);
-
+            int index = cabins.indexOf(cabin);
+            Label amountToPay = new Label("К оплате за " +  String.valueOf(cabin.getNumber()));
+            Label text = new Label(String.valueOf(cabin.getRentPrice()));
+            Button button = new Button("Оплатить " + String.valueOf(cabin.getNumber()));
+            button.setOnMousePressed(event -> {
+                System.out.println(cabin.getName());
+                cabin.setIsPaid(true);
+            });
+            grid.add(amountToPay, 0, index);
+            grid.add(text, 1, index);
+            grid.add(button, 2, index);
         });
+
+
+        Label totalToPay = new Label(String.valueOf(cabins.stream()
+                .mapToInt(CabinsTab.Cabin::getRentPrice)
+                .sum()));
+        Button payForAll = new Button("Оплатить все");
+
+        grid.add(new Label("Всего к оплате"), 0, cabins.size());
+        grid.add(totalToPay, 1, cabins.size());
+        grid.add(payForAll, 2, cabins.size());
 
         dialog.getDialogPane().setContent(grid);
 

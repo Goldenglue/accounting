@@ -17,10 +17,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class DataProcessing {
     private static Connection connection;
     private static Logger logger = LogManager.getLogger();
+    private static List<String> cabinsTablesNames;
 
 
     public static void connectToDatabase() throws SQLException {
@@ -32,6 +34,7 @@ public class DataProcessing {
         try {
             connection = DriverManager.getConnection("jdbc:h2:~/accounting/data;ifexists=true", "", "");
             logger.info("Successfully connected to database");
+            cabinsTablesNames = getAvailableTableNames("CABINS");
         } catch (SQLException e) {
             connection = DriverManager.getConnection("jdbc:h2:~/accounting/data;create=true", "", "");
             initDatabase();
@@ -107,7 +110,7 @@ public class DataProcessing {
 
     public static int insertCabinIntoDatabase(CabinsTab.Cabin cabin, String databaseName) {
         try {
-            PreparedStatement ps = connection.prepareStatement("INSERT INTO CABINS.ИЮЛ_2017_825(NAME,RENT_PRICE,CURRTEN_PAYMENT_AMOUNT,INVENTORY_PRICE,TRANSFER_DATE,RENTER,IS_PAID,INFO,NUMBER,PAYMENT_DATE) VALUES (?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = connection.prepareStatement("INSERT INTO CABINS.CABINS_825(NAME,RENT_PRICE,CURRTEN_PAYMENT_AMOUNT,INVENTORY_PRICE,TRANSFER_DATE,RENTER,IS_PAID,INFO,NUMBER,PAYMENT_DATE) VALUES (?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             ps.setString(1, cabin.getName());
             ps.setInt(2, cabin.getRentPrice());
@@ -286,13 +289,22 @@ public class DataProcessing {
             Object[] objects = (Object[]) array.getArray();
             Integer[] integers = new Integer[objects.length];
             for (int i = 0; i < objects.length; i++) {
-                integers[i] = Integer.parseInt((String)objects[i]);
+                integers[i] = Integer.parseInt((String) objects[i]);
             }
             return integers;
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static CabinsTab.Cabin getCabinByRenterAndNumber(String renter, Integer number) {
+        List<CabinsTab.Cabin> cabins = new ArrayList<>();
+        cabinsTablesNames.forEach(name -> cabins.addAll(CabinsTab.loadCabinsFromDatabase(name)));
+        return cabins.stream()
+                .filter(cabin -> cabin.getNumber() == number && cabin.getRenter().equals(renter))
+                .findFirst()
+                .get();
     }
 
 }
