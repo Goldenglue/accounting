@@ -100,7 +100,7 @@ public class CabinsTab extends AbstractTab {
         landlordInfoColumn.setEditable(true);
 
         paymentDateColumn = new TableColumn<>("Дата платежа");
-        paymentDateColumn.setCellValueFactory(new PropertyValueFactory<>("paymentDate"));
+        paymentDateColumn.setCellValueFactory(new PropertyValueFactory<>("currentPaymentDate"));
         paymentDateColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         paymentDateColumn.setPrefWidth(100);
         paymentDateColumn.setEditable(true);
@@ -196,6 +196,21 @@ public class CabinsTab extends AbstractTab {
         try {
             while (set.next()) {
                 Object[] objects = (Object[])set.getArray(10).getArray();
+                Integer[] integers = new Integer[objects.length];
+                for (int i = 0; i < objects.length; i++) {
+                    integers[i] = Integer.parseInt((String) objects[i]);
+                }
+                Object[] renters;
+                String[] strings = new String[0];
+                if (set.getArray(13).getArray() != null) {
+                    renters = (Object[])set.getArray(13).getArray();
+                    strings = new String[renters.length];
+                    for (int i = 0; i < renters.length; i++) {
+                        strings[i] = renters[i].toString();
+                    }
+                }
+
+
                 cabins.add(new Cabin(set.getInt(1),
                         set.getInt(2),
                         set.getString(3),
@@ -205,8 +220,11 @@ public class CabinsTab extends AbstractTab {
                         set.getDate(7) != null ? set.getDate(7).toLocalDate() : null,
                         set.getString(8),
                         set.getBoolean(9),
-                        Integer.parseInt((String) objects[objects.length - 1]),
-                        set.getString(11)));
+                        integers,
+                        set.getString(11),
+                        set.getInt(12),
+                        strings,
+                        set.getString(14)));
             }
             cabins.sort(Comparator.comparingInt(Cabin::getNumber));
         } catch (SQLException e) {
@@ -216,7 +234,7 @@ public class CabinsTab extends AbstractTab {
     }
 
     public static class Cabin {
-        SimpleStringProperty series;
+
         SimpleIntegerProperty ID;
         SimpleIntegerProperty number;
         SimpleStringProperty name;
@@ -225,9 +243,12 @@ public class CabinsTab extends AbstractTab {
         SimpleIntegerProperty inventoryPrice;
         SimpleObjectProperty<LocalDate> transferDate;
         SimpleStringProperty renter;
-        SimpleIntegerProperty paymentDate;
         SimpleBooleanProperty isPaid;
+        SimpleIntegerProperty[] paymentDates;
         SimpleStringProperty additionalInfo;
+        SimpleIntegerProperty currentPaymentDate;
+        SimpleStringProperty[] previousRenters;
+        SimpleStringProperty series;
 
         public Cabin(int number, String name) {
             this.number = new SimpleIntegerProperty(number);
@@ -235,7 +256,7 @@ public class CabinsTab extends AbstractTab {
         }
 
 
-        Cabin(int ID, int number, String name, int rentPrice, int currentPaymentAmount, int inventoryPrice, LocalDate transferDate, String renter, boolean isPaid, int paymentDate, String additionalInfo) {
+        Cabin(int ID, int number, String name, int rentPrice, int currentPaymentAmount, int inventoryPrice, LocalDate transferDate, String renter, boolean isPaid, Integer[] paymentDates, String additionalInfo, int currentPaymentDate, String[] previousRenters, String series) {
             this.ID = new SimpleIntegerProperty(ID);
             this.number = new SimpleIntegerProperty(number);
             this.name = new SimpleStringProperty(name);
@@ -244,12 +265,21 @@ public class CabinsTab extends AbstractTab {
             this.inventoryPrice = new SimpleIntegerProperty(inventoryPrice);
             this.transferDate = new SimpleObjectProperty<>(transferDate);
             this.renter = new SimpleStringProperty(renter);
-            this.paymentDate = new SimpleIntegerProperty(paymentDate);
             this.isPaid = new SimpleBooleanProperty(isPaid);
+            this.paymentDates = new SimpleIntegerProperty[paymentDates.length];
+            for (int i = 0; i < paymentDates.length; i++) {
+                this.paymentDates[i] = new SimpleIntegerProperty(paymentDates[i]);
+            }
             this.additionalInfo = new SimpleStringProperty(additionalInfo);
+            this.currentPaymentDate = new SimpleIntegerProperty(currentPaymentDate);
+            this.previousRenters = new SimpleStringProperty[previousRenters.length];
+            for (int i = 0; i < previousRenters.length; i++) {
+                this.previousRenters[i] = new SimpleStringProperty(previousRenters[i]);
+            }
+            this.series = new SimpleStringProperty(series);
         }
 
-        public Cabin(int number, String name, int rentPrice, int currentPaymentAmount, int inventoryPrice, LocalDate transferDate, String renter, int paymentDate, boolean isPaid, String additionalInfo) {
+        public Cabin(int number, String name, int rentPrice, int currentPaymentAmount, int inventoryPrice, LocalDate transferDate, String renter, int currentPaymentDate, boolean isPaid, String additionalInfo) {
             this.number = new SimpleIntegerProperty(number);
             this.name = new SimpleStringProperty(name);
             this.rentPrice = new SimpleIntegerProperty(rentPrice);
@@ -257,7 +287,7 @@ public class CabinsTab extends AbstractTab {
             this.inventoryPrice = new SimpleIntegerProperty(inventoryPrice);
             this.transferDate = new SimpleObjectProperty<>(transferDate);
             this.renter = new SimpleStringProperty(renter);
-            this.paymentDate = new SimpleIntegerProperty(paymentDate);
+            this.currentPaymentDate = new SimpleIntegerProperty(currentPaymentDate);
             this.isPaid = new SimpleBooleanProperty(isPaid);
             this.additionalInfo = new SimpleStringProperty(additionalInfo);
         }
@@ -346,16 +376,16 @@ public class CabinsTab extends AbstractTab {
             this.renter.set(renter);
         }
 
-        public int getPaymentDate() {
-            return paymentDate.get();
+        public int getCurrentPaymentDate() {
+            return currentPaymentDate.get();
         }
 
-        public SimpleIntegerProperty paymentDateProperty() {
-            return paymentDate;
+        public SimpleIntegerProperty currentPaymentDateProperty() {
+            return currentPaymentDate;
         }
 
-        public void setPaymentDate(int paymentDate) {
-            this.paymentDate.set(paymentDate);
+        public void setCurrentPaymentDate(int currentPaymentDate) {
+            this.currentPaymentDate.set(currentPaymentDate);
         }
 
         public boolean isIsPaid() {
@@ -370,6 +400,14 @@ public class CabinsTab extends AbstractTab {
             this.isPaid.set(isPaid);
         }
 
+
+        public SimpleIntegerProperty[] getPaymentDates() {
+            return paymentDates;
+        }
+
+        public void setPaymentDates(SimpleIntegerProperty[] paymentDates) {
+            this.paymentDates = paymentDates;
+        }
 
         public String getSeries() {
             return series.get();
@@ -406,6 +444,17 @@ public class CabinsTab extends AbstractTab {
         public void setAdditionalInfo(String additionalInfo) {
             this.additionalInfo.set(additionalInfo);
         }
+
+
+        public SimpleStringProperty[] getPreviousRenters() {
+            return previousRenters;
+        }
+
+        public void setPreviousRenters(SimpleStringProperty[] previousRenters) {
+            this.previousRenters = previousRenters;
+        }
+
+
     }
 
     public static class LocalDateCellFactory extends TableCell<Cabin, LocalDate> {

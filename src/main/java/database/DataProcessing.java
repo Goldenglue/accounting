@@ -17,7 +17,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 public class DataProcessing {
     private static Connection connection;
@@ -125,7 +124,7 @@ public class DataProcessing {
             ps.setBoolean(7, cabin.isIsPaid());
             ps.setString(8, cabin.getAdditionalInfo());
             ps.setInt(9, cabin.getNumber());
-            ps.setInt(10, cabin.getPaymentDate());
+            ps.setInt(10, cabin.getCurrentPaymentDate());
             connection.setAutoCommit(false);
             ps.executeUpdate();
             ResultSet set = ps.getGeneratedKeys();
@@ -305,6 +304,18 @@ public class DataProcessing {
                 .filter(cabin -> cabin.getNumber() == number && cabin.getRenter().equals(renter))
                 .findFirst()
                 .get();
+    }
+
+    public static void updateCabinStatus(String table, LocalDate dateOfPayment, CabinsTab.Cabin cabin) {
+        try {
+            PreparedStatement ps = connection.prepareStatement("UPDATE CABINS.CABINS_040_043 SET IS_PAID = ?, PAYMENT_DATES = ?, CURRENT_PAYMENT_DATE = ?");
+            ps.setBoolean(1, cabin.isIsPaid());
+            ps.setArray(2, connection.createArrayOf("VARCHAR", cabin.getPaymentDates()));
+            ps.setInt(3, cabin.getCurrentPaymentDate());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
     }
 
 }

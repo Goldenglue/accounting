@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 
 
 public class PaymentTab extends AbstractTab {
@@ -261,12 +260,11 @@ public class PaymentTab extends AbstractTab {
 
         cabins.forEach(cabin -> {
             int index = cabins.indexOf(cabin);
-            Label amountToPay = new Label("К оплате за " +  String.valueOf(cabin.getNumber()));
+            Label amountToPay = new Label("К оплате за " + String.valueOf(cabin.getNumber()));
             Label text = new Label(String.valueOf(cabin.getRentPrice()));
             Button button = new Button("Оплатить " + String.valueOf(cabin.getNumber()));
-            button.setOnMousePressed(event -> {
-                datePicker.getValue();
-                System.out.println(cabin.getName());
+            button.setOnAction(event -> {
+                DataProcessing.updateCabinStatus(cabin.getSeries(), datePicker.getValue(), cabin);
                 cabin.setIsPaid(true);
             });
             grid.add(amountToPay, 0, index);
