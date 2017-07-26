@@ -36,6 +36,7 @@ public class PaymentTab extends AbstractTab {
     private TableColumn<Payment, String> unitColumn;
     private TableColumn<Payment, Integer> sumColumn;
     private ComboBox<String> periodComboBox;
+    private DatePicker datePicker;
 
     PaymentTab() {
         table = setTableUp();
@@ -157,15 +158,11 @@ public class PaymentTab extends AbstractTab {
         HBox selectionBox = new HBox();
         selectionBox.getChildren().addAll(periodComboBox, choosePeriod);
 
-        DatePicker datePicker = new DatePicker(LocalDate.now());
+        datePicker = new DatePicker(LocalDate.now());
         datePicker.setMaxWidth(dateColumn.getPrefWidth());
 
         final TextField addNumber = new TextField();
         addNumber.setPrefWidth(numberColumn.getPrefWidth());
-
-        long number = 5;
-        LongStream.range(2, number - 1)
-                .noneMatch(index -> index % number == 0);
         addNumber.setPromptText("№ п/п");
 
         List<String> info = DataProcessing.getRenters();
@@ -204,10 +201,13 @@ public class PaymentTab extends AbstractTab {
 
         final Button addButton = new Button("Добавить");
         addButton.setOnAction(action -> {
+            if (typeComboBox.getValue().equals("Аренда")) {
+                createPaymentDialog(addPayment.getText());
+            }
             /*Payment payment = new Payment(datePicker.getValue(), Integer.parseInt(addNumber.getText()), addPayment.getText(),
                     typeComboBox.getValue(), Integer.parseInt(addSum.getText()));
             payment.setID(DataProcessing.insertPaymentIntoDatabase(payment, periodComboBox.getValue()));*/
-            createPaymentDialog(addPayment.getText());
+
             /*paymentObservableList.add(payment);*/
             addNumber.clear();
             addPayment.clear();
@@ -249,6 +249,8 @@ public class PaymentTab extends AbstractTab {
         dialog.getDialogPane().getButtonTypes().addAll(payType, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
+        ScrollPane pane = new ScrollPane();
+
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
@@ -263,6 +265,7 @@ public class PaymentTab extends AbstractTab {
             Label text = new Label(String.valueOf(cabin.getRentPrice()));
             Button button = new Button("Оплатить " + String.valueOf(cabin.getNumber()));
             button.setOnMousePressed(event -> {
+                datePicker.getValue();
                 System.out.println(cabin.getName());
                 cabin.setIsPaid(true);
             });
@@ -281,7 +284,10 @@ public class PaymentTab extends AbstractTab {
         grid.add(totalToPay, 1, cabins.size());
         grid.add(payForAll, 2, cabins.size());
 
-        dialog.getDialogPane().setContent(grid);
+        grid.setPrefHeight(500);
+        pane.setContent(grid);
+        pane.setPrefViewportHeight(500);
+        dialog.getDialogPane().setContent(pane);
 
         dialog.show();
 
