@@ -306,12 +306,16 @@ public class DataProcessing {
                 .get();
     }
 
-    public static void updateCabinStatus(String table, LocalDate dateOfPayment, CabinsTab.Cabin cabin) {
+    public static void updateCabinStatus(String table, CabinsTab.Cabin cabin) {
         try {
-            PreparedStatement ps = connection.prepareStatement("UPDATE CABINS.CABINS_040_043 SET IS_PAID = ?, PAYMENT_DATES = ?, CURRENT_PAYMENT_DATE = ?");
+            PreparedStatement ps = connection.prepareStatement("UPDATE CABINS." + table + " SET IS_PAID = ?, PAYMENT_DATES = ?, CURRENT_PAYMENT_DATE = ? WHERE ID = ?");
             ps.setBoolean(1, cabin.isIsPaid());
-            ps.setArray(2, connection.createArrayOf("VARCHAR", cabin.getPaymentDates()));
+            ps.setArray(2, connection.createArrayOf("INTEGER", cabin.getPaymentDates().toArray()));
             ps.setInt(3, cabin.getCurrentPaymentDate());
+            ps.setInt(4, cabin.getID());
+            logger.info(cabin.getName());
+            logger.info("Query: " + ps.toString());
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -195,22 +196,20 @@ public class CabinsTab extends AbstractTab {
         List<Cabin> cabins = new ArrayList<>();
         try {
             while (set.next()) {
-                Object[] objects = (Object[])set.getArray(10).getArray();
+                Object[] objects = (Object[]) set.getArray(10).getArray();
                 Integer[] integers = new Integer[objects.length];
                 for (int i = 0; i < objects.length; i++) {
-                    integers[i] = Integer.parseInt((String) objects[i]);
-                }
-                Object[] renters;
-                String[] strings = new String[0];
-                if (set.getArray(13).getArray() != null) {
-                    renters = (Object[])set.getArray(13).getArray();
-                    strings = new String[renters.length];
-                    for (int i = 0; i < renters.length; i++) {
-                        strings[i] = renters[i].toString();
+                    if (objects[i] != "") {
+                        integers[i] = (Integer) objects[i];
+                    } else {
+                        integers[i] = 0;
                     }
                 }
-
-
+                Object[] renters = (Object[]) set.getArray(13).getArray();
+                String[] strings = new String[renters.length];
+                for (int i = 0; i < renters.length; i++) {
+                    strings[i] = renters[i].toString();
+                }
                 cabins.add(new Cabin(set.getInt(1),
                         set.getInt(2),
                         set.getString(3),
@@ -234,21 +233,20 @@ public class CabinsTab extends AbstractTab {
     }
 
     public static class Cabin {
-
-        SimpleIntegerProperty ID;
-        SimpleIntegerProperty number;
-        SimpleStringProperty name;
-        SimpleIntegerProperty rentPrice;
-        SimpleIntegerProperty currentPaymentAmount;
-        SimpleIntegerProperty inventoryPrice;
-        SimpleObjectProperty<LocalDate> transferDate;
-        SimpleStringProperty renter;
-        SimpleBooleanProperty isPaid;
-        SimpleIntegerProperty[] paymentDates;
-        SimpleStringProperty additionalInfo;
-        SimpleIntegerProperty currentPaymentDate;
-        SimpleStringProperty[] previousRenters;
-        SimpleStringProperty series;
+        private SimpleIntegerProperty ID;
+        private SimpleIntegerProperty number;
+        private SimpleStringProperty name;
+        private SimpleIntegerProperty rentPrice;
+        private SimpleIntegerProperty currentPaymentAmount;
+        private SimpleIntegerProperty inventoryPrice;
+        private SimpleObjectProperty<LocalDate> transferDate;
+        private SimpleStringProperty renter;
+        private SimpleBooleanProperty isPaid;
+        private SimpleObjectProperty<ArrayList<Integer>> paymentDates;
+        private SimpleStringProperty additionalInfo;
+        private SimpleIntegerProperty currentPaymentDate;
+        private SimpleObjectProperty<ArrayList<String>> previousRenters;
+        private SimpleStringProperty series;
 
         public Cabin(int number, String name) {
             this.number = new SimpleIntegerProperty(number);
@@ -266,16 +264,12 @@ public class CabinsTab extends AbstractTab {
             this.transferDate = new SimpleObjectProperty<>(transferDate);
             this.renter = new SimpleStringProperty(renter);
             this.isPaid = new SimpleBooleanProperty(isPaid);
-            this.paymentDates = new SimpleIntegerProperty[paymentDates.length];
-            for (int i = 0; i < paymentDates.length; i++) {
-                this.paymentDates[i] = new SimpleIntegerProperty(paymentDates[i]);
-            }
+            this.paymentDates = new SimpleObjectProperty<>(new ArrayList<>());
+            this.paymentDates.get().addAll(Arrays.asList(paymentDates));
             this.additionalInfo = new SimpleStringProperty(additionalInfo);
             this.currentPaymentDate = new SimpleIntegerProperty(currentPaymentDate);
-            this.previousRenters = new SimpleStringProperty[previousRenters.length];
-            for (int i = 0; i < previousRenters.length; i++) {
-                this.previousRenters[i] = new SimpleStringProperty(previousRenters[i]);
-            }
+            this.previousRenters = new SimpleObjectProperty<>(new ArrayList<>());
+            this.previousRenters.get().addAll(Arrays.asList(previousRenters));
             this.series = new SimpleStringProperty(series);
         }
 
@@ -290,6 +284,12 @@ public class CabinsTab extends AbstractTab {
             this.currentPaymentDate = new SimpleIntegerProperty(currentPaymentDate);
             this.isPaid = new SimpleBooleanProperty(isPaid);
             this.additionalInfo = new SimpleStringProperty(additionalInfo);
+        }
+
+        public void payForCabin(LocalDate date) {
+            setIsPaid(true);
+            getPaymentDates().add(date.getDayOfMonth());
+            setCurrentPaymentDate(date.getDayOfMonth());
         }
 
         public int getNumber() {
@@ -400,15 +400,6 @@ public class CabinsTab extends AbstractTab {
             this.isPaid.set(isPaid);
         }
 
-
-        public SimpleIntegerProperty[] getPaymentDates() {
-            return paymentDates;
-        }
-
-        public void setPaymentDates(SimpleIntegerProperty[] paymentDates) {
-            this.paymentDates = paymentDates;
-        }
-
         public String getSeries() {
             return series.get();
         }
@@ -445,13 +436,28 @@ public class CabinsTab extends AbstractTab {
             this.additionalInfo.set(additionalInfo);
         }
 
+        public ArrayList<Integer> getPaymentDates() {
+            return paymentDates.get();
+        }
 
-        public SimpleStringProperty[] getPreviousRenters() {
+        public SimpleObjectProperty<ArrayList<Integer>> paymentDatesProperty() {
+            return paymentDates;
+        }
+
+        public void setPaymentDates(ArrayList<Integer> paymentDates) {
+            this.paymentDates.set(paymentDates);
+        }
+
+        public ArrayList<String> getPreviousRenters() {
+            return previousRenters.get();
+        }
+
+        public SimpleObjectProperty<ArrayList<String>> previousRentersProperty() {
             return previousRenters;
         }
 
-        public void setPreviousRenters(SimpleStringProperty[] previousRenters) {
-            this.previousRenters = previousRenters;
+        public void setPreviousRenters(ArrayList<String> previousRenters) {
+            this.previousRenters.set(previousRenters);
         }
 
 

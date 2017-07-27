@@ -264,8 +264,8 @@ public class PaymentTab extends AbstractTab {
             Label text = new Label(String.valueOf(cabin.getRentPrice()));
             Button button = new Button("Оплатить " + String.valueOf(cabin.getNumber()));
             button.setOnAction(event -> {
-                DataProcessing.updateCabinStatus(cabin.getSeries(), datePicker.getValue(), cabin);
-                cabin.setIsPaid(true);
+                cabin.payForCabin(datePicker.getValue());
+                DataProcessing.updateCabinStatus(cabin.getSeries(), cabin);
             });
             grid.add(amountToPay, 0, index);
             grid.add(text, 1, index);
