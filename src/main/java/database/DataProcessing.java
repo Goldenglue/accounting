@@ -37,22 +37,17 @@ public class DataProcessing {
         } catch (SQLException e) {
             connection = DriverManager.getConnection("jdbc:h2:~/accounting/data;create=true", "", "");
             initDatabase();
+            cabinsTablesNames = getAvailableTableNames("CABINS");
             logger.info("Created new database");
         }
     }
 
     private static void initDatabase() throws SQLException {
         Path path = Paths.get("init.sql");
-        BufferedReader reader1 = null;
-
         try {
-            reader1 = Files.newBufferedReader(path);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
+            BufferedReader reader1 = Files.newBufferedReader(path);
             RunScript.execute(connection, reader1);
-        } catch (SQLException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -64,7 +59,6 @@ public class DataProcessing {
         String query = "CREATE TABLE IF NOT EXISTS PAYMENTS." + tableName + "("
                 + "ID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,"
                 + "DATE DATE NOT NULL ,"
-                + "NUMBER INT NOT NULL,"
                 + "PAYMENT VARCHAR(256) NOT NULL,"
                 + "TYPE VARCHAR(45) NOT NULL,"
                 + "AMOUNT  INT NOT NULL"
@@ -78,7 +72,7 @@ public class DataProcessing {
         try {
             PreparedStatement preparedInsertStatement;
 
-            String insertStatement = "INSERT INTO PAYMENTS." + period + "(DATE, NUMBER, PAYMENT, TYPE, AMOUNT) VALUES(?,?,?,?,?)";
+            String insertStatement = "INSERT INTO PAYMENTS." + period + "(DATE, PAYMENT, TYPE, AMOUNT) VALUES(?,?,?,?)";
 
             preparedInsertStatement = connection.prepareStatement(insertStatement, Statement.RETURN_GENERATED_KEYS);
 
@@ -86,10 +80,9 @@ public class DataProcessing {
             String formattedDate = formatter.format(payment.getDate());
             connection.setAutoCommit(false);
             preparedInsertStatement.setDate(1, Date.valueOf(formattedDate));
-            preparedInsertStatement.setInt(2, payment.getNumber());
-            preparedInsertStatement.setString(3, payment.getPayment());
-            preparedInsertStatement.setString(4, payment.getType());
-            preparedInsertStatement.setInt(5, payment.getSum());
+            preparedInsertStatement.setString(2, payment.getPayment());
+            preparedInsertStatement.setString(3, payment.getType());
+            preparedInsertStatement.setInt(4, payment.getSum());
             logger.info("Inserting new value into database: " + preparedInsertStatement);
             preparedInsertStatement.executeUpdate();
 
@@ -109,7 +102,7 @@ public class DataProcessing {
 
     public static int insertCabinIntoDatabase(CabinsTab.Cabin cabin, String databaseName) {
         try {
-            PreparedStatement ps = connection.prepareStatement("INSERT INTO CABINS.CABINS_825(NAME,RENT_PRICE,CURRTEN_PAYMENT_AMOUNT,INVENTORY_PRICE,TRANSFER_DATE,RENTER,IS_PAID,INFO,NUMBER,PAYMENT_DATE) VALUES (?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = connection.prepareStatement("INSERT INTO CABINS." + databaseName + "(NAME,RENT_PRICE,CURRTEN_PAYMENT_AMOUNT,INVENTORY_PRICE,TRANSFER_DATE,RENTER,IS_PAID,INFO,NUMBER,PAYMENT_DATE) VALUES (?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             ps.setString(1, cabin.getName());
             ps.setInt(2, cabin.getRentPrice());
@@ -169,13 +162,12 @@ public class DataProcessing {
         PreparedStatement preparedUpdateStatement;
 
         try {
-            preparedUpdateStatement = connection.prepareStatement("UPDATE PAYMENTS." + period + " SET DATE = ? , NUMBER = ?, PAYMENT = ?, TYPE = ?, AMOUNT = ? WHERE ID = ?");
+            preparedUpdateStatement = connection.prepareStatement("UPDATE PAYMENTS." + period + " SET DATE = ? , PAYMENT = ?, TYPE = ?, AMOUNT = ? WHERE ID = ?");
             preparedUpdateStatement.setDate(1, Date.valueOf(payment.getDate()));
-            preparedUpdateStatement.setInt(2, payment.getNumber());
-            preparedUpdateStatement.setString(3, payment.getPayment());
-            preparedUpdateStatement.setString(4, payment.getType());
-            preparedUpdateStatement.setInt(5, payment.getSum());
-            preparedUpdateStatement.setInt(6, payment.getID());
+            preparedUpdateStatement.setString(2, payment.getPayment());
+            preparedUpdateStatement.setString(3, payment.getType());
+            preparedUpdateStatement.setInt(4, payment.getSum());
+            preparedUpdateStatement.setInt(5, payment.getID());
             logger.info("Updating value in database with " + preparedUpdateStatement);
             preparedUpdateStatement.executeUpdate();
         } catch (SQLException e) {
@@ -228,10 +220,12 @@ public class DataProcessing {
 
     public static void backupDatabase() {
         try {
+            if (!Files.exists(Paths.get("init.sql"))) {
+                Files.createFile(Paths.get("init.sql"));
+            }
             Statement statement = connection.createStatement();
-            statement.execute("SCRIPT NODATA TO 'init.sql'");
-            statement.execute("SCRIPT TO 'backup.sql'");
-        } catch (SQLException e) {
+            statement.execute("SCRIPT TO 'init.sql'");
+        } catch (SQLException | IOException e) {
             e.printStackTrace();
         }
     }

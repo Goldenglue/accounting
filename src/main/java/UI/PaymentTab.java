@@ -1,9 +1,8 @@
 package UI;
 
 import database.DataProcessing;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.*;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Side;
 import javafx.scene.control.*;
@@ -30,7 +29,6 @@ public class PaymentTab extends AbstractTab {
     private final HBox hBox = new HBox();
     private final VBox vBox = new VBox();
     private TableColumn<Payment, LocalDate> dateColumn;
-    private TableColumn<Payment, Integer> numberColumn;
     private TableColumn<Payment, String> paymentColumn;
     private TableColumn<Payment, String> unitColumn;
     private TableColumn<Payment, Integer> sumColumn;
@@ -63,9 +61,6 @@ public class PaymentTab extends AbstractTab {
         dateColumn.setEditable(true);
         dateColumn.setPrefWidth(100);
 
-        numberColumn = new TableColumn<>("№ п/п");
-        numberColumn.setCellValueFactory(new PropertyValueFactory<>("number"));
-        numberColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         /*numberColumn.setCellFactory(column -> new TableCell<Payment, Integer>() {
             @Override
             protected void updateItem(Integer item, boolean empty) {
@@ -77,13 +72,6 @@ public class PaymentTab extends AbstractTab {
                 setStyle("-fx-background-color: #f6ff4a");
             }
         });*/
-        numberColumn.setOnEditCommit(t -> {
-            t.getTableView().getItems()
-                    .get(t.getTablePosition().getRow())
-                    .setNumber(t.getNewValue());
-            DataProcessing.updatePayment(t.getTableView().getItems().get(t.getTablePosition().getRow()), periodComboBox.getValue());
-        });
-        numberColumn.setPrefWidth(60);
 
         paymentColumn = new TableColumn<>("Платеж");
         paymentColumn.setCellValueFactory(new PropertyValueFactory<>("payment"));
@@ -122,7 +110,7 @@ public class PaymentTab extends AbstractTab {
 
         //DataProcessing.matchRenterWithCabins();
         table.setItems(paymentObservableList);
-        table.getColumns().addAll(dateColumn, numberColumn, paymentColumn, unitColumn, sumColumn);
+        table.getColumns().addAll(dateColumn, paymentColumn, unitColumn, sumColumn);
         return table;
     }
 
@@ -132,8 +120,8 @@ public class PaymentTab extends AbstractTab {
 
         try {
             while (resultSet.next()) {
-                paymentObservableList.add(new Payment(resultSet.getDate(2).toLocalDate(), resultSet.getInt(3),
-                        resultSet.getString(4), resultSet.getString(5), resultSet.getInt(6), resultSet.getInt(1)));
+                paymentObservableList.add(new Payment(resultSet.getDate(2).toLocalDate(),
+                        resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5), resultSet.getInt(1)));
                 paymentObservableList.sort(Comparator.comparingInt(Payment::getID));
             }
         } catch (SQLException e) {
@@ -145,8 +133,12 @@ public class PaymentTab extends AbstractTab {
     protected void createGUI() {
         periodComboBox = new ComboBox<>();
         periodComboBox.getItems().addAll(DataProcessing.getAvailableTableNames("PAYMENTS"));
+        periodComboBox.getSelectionModel().selectFirst();
         periodComboBox.setEditable(false);
         periodComboBox.setPrefWidth(100);
+
+        paymentObservableList.clear();
+        loadFromDatabase(periodComboBox.getValue());
 
         final Button choosePeriod = new Button("Выбрать месяц");
         choosePeriod.setOnAction(action -> {
@@ -159,10 +151,6 @@ public class PaymentTab extends AbstractTab {
 
         datePicker = new DatePicker(LocalDate.now());
         datePicker.setMaxWidth(dateColumn.getPrefWidth());
-
-        final TextField addNumber = new TextField();
-        addNumber.setPrefWidth(numberColumn.getPrefWidth());
-        addNumber.setPromptText("№ п/п");
 
         List<String> info = DataProcessing.getRenters();
 
@@ -201,14 +189,13 @@ public class PaymentTab extends AbstractTab {
         final Button addButton = new Button("Добавить");
         addButton.setOnAction(action -> {
             if (typeComboBox.getValue().equals("Аренда")) {
-                createPaymentDialog(addPayment.getText());
+                createPaymentDialog(addPayment.getText(), Integer.parseInt(addSum.getText()));
             }
-            /*Payment payment = new Payment(datePicker.getValue(), Integer.parseInt(addNumber.getText()), addPayment.getText(),
+            Payment payment = new Payment(datePicker.getValue(), addPayment.getText(),
                     typeComboBox.getValue(), Integer.parseInt(addSum.getText()));
-            payment.setID(DataProcessing.insertPaymentIntoDatabase(payment, periodComboBox.getValue()));*/
+            payment.setID(DataProcessing.insertPaymentIntoDatabase(payment, periodComboBox.getValue()));
 
-            /*paymentObservableList.add(payment);*/
-            addNumber.clear();
+            paymentObservableList.add(payment);
             addPayment.clear();
             addSum.clear();
         });
@@ -229,7 +216,7 @@ public class PaymentTab extends AbstractTab {
                     });
         });
 
-        hBox.getChildren().addAll(datePicker, addNumber, addPayment, typeComboBox, addSum, addButton, removeButton);
+        hBox.getChildren().addAll(datePicker, addPayment, typeComboBox, addSum, addButton, removeButton);
 
         vBox.setSpacing(5);
         vBox.setPadding(new Insets(10, 0, 0, 10));
@@ -237,7 +224,7 @@ public class PaymentTab extends AbstractTab {
 
     }
 
-    private void createPaymentDialog(String renter) {
+    private void createPaymentDialog(String renter, Integer sum) {
         List<Integer> cabinsNumbers = new ArrayList<>();
         cabinsNumbers.addAll(Arrays.asList(DataProcessing.getRentedCabins(renter)));
 
@@ -258,15 +245,29 @@ public class PaymentTab extends AbstractTab {
                 .map(integer -> DataProcessing.getCabinByRenterAndNumber(renter, integer))
                 .collect(Collectors.toList());
 
+        ObservableValue<Integer> alreadyPaidAmount = new ReadOnlyObjectWrapper<>(cabins.stream()
+                .filter(CabinsTab.Cabin::isIsPaid)
+                .mapToInt(CabinsTab.Cabin::getRentPrice)
+                .sum());
+
+        StringProperty alreadyPaidString = new SimpleStringProperty(String.valueOf(alreadyPaidAmount.getValue()));
+        Label alreadyPaid = new Label(alreadyPaidString.toString());
+        alreadyPaid.textProperty().bind(alreadyPaidString);
+
         cabins.forEach(cabin -> {
             int index = cabins.indexOf(cabin);
             Label amountToPay = new Label("К оплате за " + String.valueOf(cabin.getNumber()));
             Label text = new Label(String.valueOf(cabin.getRentPrice()));
+
             Button button = new Button("Оплатить " + String.valueOf(cabin.getNumber()));
             button.setOnAction(event -> {
-                cabin.payForCabin(datePicker.getValue());
-                DataProcessing.updateCabinStatus(cabin.getSeries(), cabin);
+                if (!cabin.isIsPaid()) {
+                    alreadyPaidString.setValue(String.valueOf(Integer.parseInt(alreadyPaidString.getValue()) + cabin.getRentPrice()));
+                    cabin.payForCabin(datePicker.getValue());
+                    DataProcessing.updateCabinStatus(cabin.getSeries(), cabin);
+                }
             });
+
             grid.add(amountToPay, 0, index);
             grid.add(text, 1, index);
             grid.add(button, 2, index);
@@ -278,9 +279,12 @@ public class PaymentTab extends AbstractTab {
                 .sum()));
         Button payForAll = new Button("Оплатить все");
 
-        grid.add(new Label("Всего к оплате"), 0, cabins.size());
-        grid.add(totalToPay, 1, cabins.size());
-        grid.add(payForAll, 2, cabins.size());
+        int index = cabins.size();
+        grid.add(new Label("Всего к оплате:"), 0, index);
+        grid.add(totalToPay, 1, index);
+        grid.add(payForAll, 2, index);
+        grid.add(new Label("Оплачено:"), 0, ++index);
+        grid.add(alreadyPaid, 1, index);
 
         grid.setPrefHeight(500);
         pane.setContent(grid);
@@ -295,30 +299,26 @@ public class PaymentTab extends AbstractTab {
 
     public static class Payment {
         private final SimpleObjectProperty<LocalDate> date;
-        private final SimpleIntegerProperty number;
         private final SimpleStringProperty payment;
         private final SimpleStringProperty type;
         private final SimpleIntegerProperty sum;
         private SimpleIntegerProperty ID;
 
-        Payment(LocalDate date, int number, String payment, String type, int sum) {
+        Payment(LocalDate date, String payment, String type, int sum) {
             this.date = new SimpleObjectProperty<>(date);
-            this.number = new SimpleIntegerProperty(number);
             this.payment = new SimpleStringProperty(payment);
             this.type = new SimpleStringProperty(type);
             this.sum = new SimpleIntegerProperty(sum);
             this.ID = new SimpleIntegerProperty(0);
         }
 
-        Payment(LocalDate date, int number, String payment, String type, int sum, int ID) {
+        Payment(LocalDate date, String payment, String type, int sum, int ID) {
             this.date = new SimpleObjectProperty<>(date);
-            this.number = new SimpleIntegerProperty(number);
             this.payment = new SimpleStringProperty(payment);
             this.type = new SimpleStringProperty(type);
             this.sum = new SimpleIntegerProperty(sum);
             this.ID = new SimpleIntegerProperty(ID);
         }
-
 
         public int getID() {
             return ID.get();
@@ -342,18 +342,6 @@ public class PaymentTab extends AbstractTab {
 
         public SimpleObjectProperty<LocalDate> dateProperty() {
             return date;
-        }
-
-        public int getNumber() {
-            return number.get();
-        }
-
-        public void setNumber(int number) {
-            this.number.set(number);
-        }
-
-        public SimpleIntegerProperty numberProperty() {
-            return number;
         }
 
         public String getPayment() {

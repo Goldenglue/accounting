@@ -1,10 +1,9 @@
 package UI;
 
 import database.DataProcessing;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -39,9 +38,9 @@ public class CabinsTab extends AbstractTab {
     private TableColumn<Cabin, Integer> currentPaymentColumn;
     private TableColumn<Cabin, Integer> inventoryPriceColumn;
     private TableColumn<Cabin, LocalDate> transferDateColumn;
-    private TableColumn<Cabin, String> landlordInfoColumn;
-    private TableColumn<Cabin, Integer> paymentDateColumn;
+    private TableColumn<Cabin, String> renterInfoColumn;
     private TableColumn<Cabin, Boolean> isPaidColumn;
+    private TableColumn<Cabin, Integer> paymentDateColumn;
     private TableColumn<Cabin, String> additionalInfoColumn;
 
 
@@ -94,17 +93,11 @@ public class CabinsTab extends AbstractTab {
         transferDateColumn.setPrefWidth(120);
         transferDateColumn.setEditable(true);
 
-        landlordInfoColumn = new TableColumn<>("Информация об арендаторе");
-        landlordInfoColumn.setCellValueFactory(new PropertyValueFactory<>("renter"));
-        landlordInfoColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        landlordInfoColumn.setPrefWidth(200);
-        landlordInfoColumn.setEditable(true);
-
-        paymentDateColumn = new TableColumn<>("Дата платежа");
-        paymentDateColumn.setCellValueFactory(new PropertyValueFactory<>("currentPaymentDate"));
-        paymentDateColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        paymentDateColumn.setPrefWidth(100);
-        paymentDateColumn.setEditable(true);
+        renterInfoColumn = new TableColumn<>("Информация об арендаторе");
+        renterInfoColumn.setCellValueFactory(new PropertyValueFactory<>("renter"));
+        renterInfoColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        renterInfoColumn.setPrefWidth(200);
+        renterInfoColumn.setEditable(true);
 
         isPaidColumn = new TableColumn<>("Статус оплаты");
         isPaidColumn.setCellValueFactory(new PropertyValueFactory<>("isPaid"));
@@ -112,46 +105,37 @@ public class CabinsTab extends AbstractTab {
         isPaidColumn.setPrefWidth(100);
         isPaidColumn.setEditable(true);
 
+        TableColumn<Cabin, ArrayList<Integer>> paymentDatesColumn = new TableColumn<>("Даты платежей");
+        paymentDatesColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().getPaymentDates()));
+        paymentDatesColumn.setEditable(false);
+        paymentDatesColumn.setPrefWidth(100);
+
         additionalInfoColumn = new TableColumn<>("Дополнительная информация");
         additionalInfoColumn.setCellValueFactory(new PropertyValueFactory<>("additionalInfo"));
         additionalInfoColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         additionalInfoColumn.setPrefWidth(200);
         additionalInfoColumn.setEditable(true);
 
+        paymentDateColumn = new TableColumn<>("Дата платежа");
+        paymentDateColumn.setCellValueFactory(new PropertyValueFactory<>("currentPaymentDate"));
+        paymentDateColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
+        paymentDateColumn.setPrefWidth(100);
+        paymentDateColumn.setEditable(true);
 
-        //ExcelLoader.load();
-        /*System.out.println(cabinObservableList.size());
-        List<Cabin> temp = cabinObservableList.stream()
-                .filter(cabin -> 2 > cabinObservableList.stream()
-                        .filter(cabin1 -> cabin1.getNumber() == cabin.getNumber())
-                        .count())
-                .collect(Collectors.toList());
-        System.out.println(cabinObservableList.size());
-        cabinObservableList.forEach(cabin -> {
+        TableColumn<Cabin, ArrayList<String>> previousRentersColumn = new TableColumn<>("Предыдущие арендатели");
+        previousRentersColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().getPreviousRenters()));
+        previousRentersColumn.setEditable(false);
+        previousRentersColumn.setPrefWidth(100);
 
-        });
-        cabinObservableList = FXCollections.observableList(temp);
-        System.out.println(cabinObservableList.size());*/
-        /*cabinObservableList.forEach(cabin -> {
-            DataProcessing.insertCabinIntoDatabase(cabin,"040_043_ИЮЛ_2017");
-        });*/
-        //DataProcessing.matchRenterWithCabins();
         table.setItems(cabinObservableList);
-        table.getColumns().addAll(numberColumn, nameColumn, rentPriceColumn, currentPaymentColumn, inventoryPriceColumn, transferDateColumn, landlordInfoColumn, paymentDateColumn, isPaidColumn, additionalInfoColumn);
+        table.getColumns().addAll(numberColumn, nameColumn, rentPriceColumn, currentPaymentColumn, inventoryPriceColumn, transferDateColumn, renterInfoColumn, paymentDatesColumn,
+                isPaidColumn, additionalInfoColumn, paymentDateColumn, previousRentersColumn);
         return table;
     }
 
     @Override
     protected void createGUI() {
         List<String> tables = DataProcessing.getAvailableTableNames("CABINS");
-        /*final ComboBox<String> period = new ComboBox<>();
-        period.getItems().addAll(tables.stream()
-                .map(s -> s.substring(0, 8))
-                .map(s -> s.replaceAll("_", " "))
-                .collect(Collectors.toSet())
-        );
-        period.setEditable(false);
-        period.setPrefWidth(100);*/
         final ComboBox<String> types = new ComboBox<>();
         types.getItems().addAll(tables.stream()
                 .map(s -> s.replaceAll("_", " "))
@@ -264,8 +248,9 @@ public class CabinsTab extends AbstractTab {
             this.transferDate = new SimpleObjectProperty<>(transferDate);
             this.renter = new SimpleStringProperty(renter);
             this.isPaid = new SimpleBooleanProperty(isPaid);
+            this.isPaid.addListener((observable, oldValue, newValue) -> this.setIsPaid(newValue));
             this.paymentDates = new SimpleObjectProperty<>(new ArrayList<>());
-            this.paymentDates.get().addAll(Arrays.asList(paymentDates));
+            this.paymentDates.get().addAll(Arrays.stream(paymentDates).filter(integer -> integer != 0).collect(Collectors.toList()));
             this.additionalInfo = new SimpleStringProperty(additionalInfo);
             this.currentPaymentDate = new SimpleIntegerProperty(currentPaymentDate);
             this.previousRenters = new SimpleObjectProperty<>(new ArrayList<>());
