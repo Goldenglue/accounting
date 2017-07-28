@@ -5,6 +5,7 @@ import UI.PaymentTab;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.h2.tools.RunScript;
+import utils.Utils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -54,9 +55,7 @@ public class DataProcessing {
 
     public static void createTableBasedOnLocalDate(LocalDate date) throws SQLException {
         Statement statement = connection.createStatement();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM_yyyy", new Locale("ru"));
-        String tableName = formatter.format(date);
-        String query = "CREATE TABLE IF NOT EXISTS PAYMENTS." + tableName + "("
+        String query = "CREATE TABLE IF NOT EXISTS PAYMENTS." + Utils.formatDateToMMM_yyyyString(date) + "("
                 + "ID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,"
                 + "DATE DATE NOT NULL ,"
                 + "PAYMENT VARCHAR(256) NOT NULL,"
@@ -65,7 +64,7 @@ public class DataProcessing {
                 + ")";
         logger.info("Executing query: " + query);
         statement.executeUpdate(query);
-        logger.info("Created database " + tableName);
+        logger.info("Created database " + date);
     }
 
     public static int insertPaymentIntoDatabase(PaymentTab.Payment payment, String period) {
@@ -103,13 +102,12 @@ public class DataProcessing {
     public static int insertCabinIntoDatabase(CabinsTab.Cabin cabin, String databaseName) {
         try {
             PreparedStatement ps = connection.prepareStatement("INSERT INTO CABINS." + databaseName + "(NAME,RENT_PRICE,CURRTEN_PAYMENT_AMOUNT,INVENTORY_PRICE,TRANSFER_DATE,RENTER,IS_PAID,INFO,NUMBER,PAYMENT_DATE) VALUES (?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             ps.setString(1, cabin.getName());
             ps.setInt(2, cabin.getRentPrice());
             ps.setInt(3, cabin.getCurrentPaymentAmount());
             ps.setInt(4, cabin.getInventoryPrice());
             if (cabin.getTransferDate() != null) {
-                ps.setDate(5, Date.valueOf(formatter.format(cabin.getTransferDate())));
+                ps.setDate(5, Date.valueOf(Utils.formatDateToyyyyMMdd(cabin.getTransferDate())));
             } else {
                 ps.setDate(5, null);
             }
@@ -304,7 +302,7 @@ public class DataProcessing {
         try {
             PreparedStatement ps = connection.prepareStatement("UPDATE CABINS." + table + " SET IS_PAID = ?, PAYMENT_DATES = ?, CURRENT_PAYMENT_DATE = ? WHERE ID = ?");
             ps.setBoolean(1, cabin.isIsPaid());
-            ps.setArray(2, connection.createArrayOf("INTEGER", cabin.getPaymentDates().toArray()));
+            ps.setArray(2, connection.createArrayOf("VARCHAR", cabin.getPaymentDates().stream().map(Utils::formatDateToyyyyMMdd).toArray()));
             ps.setInt(3, cabin.getCurrentPaymentDate());
             ps.setInt(4, cabin.getID());
             logger.info(cabin.getName());

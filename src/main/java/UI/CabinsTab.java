@@ -9,20 +9,19 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
+import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.converter.IntegerStringConverter;
+import utils.Utils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -44,7 +43,8 @@ public class CabinsTab extends AbstractTab {
     private TableColumn<Cabin, String> additionalInfoColumn;
 
 
-    CabinsTab() {
+    CabinsTab()
+    {
         table = setTableUp();
         createGUI();
         setContent(vBox);
@@ -105,9 +105,26 @@ public class CabinsTab extends AbstractTab {
         isPaidColumn.setPrefWidth(100);
         isPaidColumn.setEditable(true);
 
-        TableColumn<Cabin, ArrayList<Integer>> paymentDatesColumn = new TableColumn<>("Даты платежей");
-        paymentDatesColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().getPaymentDates()));
-        paymentDatesColumn.setEditable(false);
+        ObservableList<ArrayList<LocalDate>> cellData = FXCollections.observableArrayList();
+        cellData.setAll(cabinObservableList.stream()
+        .map(Cabin::getPaymentDates)
+        .collect(Collectors.toList()));
+        TableColumn<Cabin, LocalDate> paymentDatesColumn = new TableColumn<>("Даты платежей");
+        paymentDatesColumn.setCellValueFactory(param -> {
+            Cabin cabin = param.getValue();
+            LocalDate date = cabin.getPaymentDates().size() > 0 ? cabin.getPaymentDates().get(0) : null;
+            return new SimpleObjectProperty<>(date);
+        });
+        paymentDatesColumn.setCellFactory(param -> new ComboBoxTableCell<Cabin, LocalDate>() {
+            @Override
+            public void startEdit() {
+                super.startEdit();
+                Cabin cabin = (Cabin)getTableRow().getItem();
+                System.out.println(cabin.getPaymentDates());
+                getItems().setAll(cabin.getPaymentDates());
+            }
+        });
+        paymentDatesColumn.setEditable(true);
         paymentDatesColumn.setPrefWidth(100);
 
         additionalInfoColumn = new TableColumn<>("Дополнительная информация");
@@ -122,8 +139,8 @@ public class CabinsTab extends AbstractTab {
         paymentDateColumn.setPrefWidth(100);
         paymentDateColumn.setEditable(true);
 
-        TableColumn<Cabin, ArrayList<String>> previousRentersColumn = new TableColumn<>("Предыдущие арендатели");
-        previousRentersColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().getPreviousRenters()));
+        TableColumn<Cabin, LocalDate> previousRentersColumn = new TableColumn<>("Предыдущие арендатели");
+        previousRentersColumn.setCellFactory(ComboBoxTableCell.forTableColumn());
         previousRentersColumn.setEditable(false);
         previousRentersColumn.setPrefWidth(100);
 
@@ -181,12 +198,12 @@ public class CabinsTab extends AbstractTab {
         try {
             while (set.next()) {
                 Object[] objects = (Object[]) set.getArray(10).getArray();
-                Integer[] integers = new Integer[objects.length];
+                String[] integers = new String[objects.length];
                 for (int i = 0; i < objects.length; i++) {
-                    if (objects[i] != "") {
-                        integers[i] = (Integer) objects[i];
+                    if (objects[i] != null && objects[i] != "0") {
+                        integers[i] = (String) objects[i];
                     } else {
-                        integers[i] = 0;
+                        integers[i] = "0";
                     }
                 }
                 Object[] renters = (Object[]) set.getArray(13).getArray();
@@ -226,7 +243,7 @@ public class CabinsTab extends AbstractTab {
         private SimpleObjectProperty<LocalDate> transferDate;
         private SimpleStringProperty renter;
         private SimpleBooleanProperty isPaid;
-        private SimpleObjectProperty<ArrayList<Integer>> paymentDates;
+        private SimpleObjectProperty<ArrayList<LocalDate>> paymentDates;
         private SimpleStringProperty additionalInfo;
         private SimpleIntegerProperty currentPaymentDate;
         private SimpleObjectProperty<ArrayList<String>> previousRenters;
@@ -238,7 +255,7 @@ public class CabinsTab extends AbstractTab {
         }
 
 
-        Cabin(int ID, int number, String name, int rentPrice, int currentPaymentAmount, int inventoryPrice, LocalDate transferDate, String renter, boolean isPaid, Integer[] paymentDates, String additionalInfo, int currentPaymentDate, String[] previousRenters, String series) {
+        Cabin(int ID, int number, String name, int rentPrice, int currentPaymentAmount, int inventoryPrice, LocalDate transferDate, String renter, boolean isPaid, String[] paymentDates, String additionalInfo, int currentPaymentDate, String[] previousRenters, String series) {
             this.ID = new SimpleIntegerProperty(ID);
             this.number = new SimpleIntegerProperty(number);
             this.name = new SimpleStringProperty(name);
@@ -250,7 +267,10 @@ public class CabinsTab extends AbstractTab {
             this.isPaid = new SimpleBooleanProperty(isPaid);
             this.isPaid.addListener((observable, oldValue, newValue) -> this.setIsPaid(newValue));
             this.paymentDates = new SimpleObjectProperty<>(new ArrayList<>());
-            this.paymentDates.get().addAll(Arrays.stream(paymentDates).filter(integer -> integer != 0).collect(Collectors.toList()));
+            this.paymentDates.get().addAll(Arrays.stream(paymentDates)
+                    .filter(integer -> !Objects.equals(integer, "0") && !integer.equals(""))
+                    .map(s -> LocalDate.parse(s, Utils.formatterOfyyyyMMdd))
+                    .collect(Collectors.toList()));
             this.additionalInfo = new SimpleStringProperty(additionalInfo);
             this.currentPaymentDate = new SimpleIntegerProperty(currentPaymentDate);
             this.previousRenters = new SimpleObjectProperty<>(new ArrayList<>());
@@ -273,7 +293,7 @@ public class CabinsTab extends AbstractTab {
 
         public void payForCabin(LocalDate date) {
             setIsPaid(true);
-            getPaymentDates().add(date.getDayOfMonth());
+            getPaymentDates().add(date);
             setCurrentPaymentDate(date.getDayOfMonth());
         }
 
@@ -421,15 +441,15 @@ public class CabinsTab extends AbstractTab {
             this.additionalInfo.set(additionalInfo);
         }
 
-        public ArrayList<Integer> getPaymentDates() {
+        public ArrayList<LocalDate> getPaymentDates() {
             return paymentDates.get();
         }
 
-        public SimpleObjectProperty<ArrayList<Integer>> paymentDatesProperty() {
+        public SimpleObjectProperty<ArrayList<LocalDate>> paymentDatesProperty() {
             return paymentDates;
         }
 
-        public void setPaymentDates(ArrayList<Integer> paymentDates) {
+        public void setPaymentDates(ArrayList<LocalDate> paymentDates) {
             this.paymentDates.set(paymentDates);
         }
 
