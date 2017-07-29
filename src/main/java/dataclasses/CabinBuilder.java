@@ -6,17 +6,22 @@ public class CabinBuilder {
     private int id = 0;
     private int number;
     private String name;
-    private int rentPrice;
-    private int currentPaymentAmount;
-    private int inventoryPrice;
-    private LocalDate transferDate;
-    private String renter;
-    private boolean isPaid;
-    private String[] paymentDates;
-    private String additionalInfo;
-    private int currentPaymentDate;
-    private String[] previousRenters;
+    private int rentPrice = 0;
+    private int currentPaymentAmount = 0;
+    private int inventoryPrice = 0;
+    private LocalDate transferDate = null;
+    private String renter = "";
+    private boolean isPaid = false;
+    private String[] paymentDates = new String[1];
+    private String additionalInfo = "";
+    private int currentPaymentDate = 0;
+    private String[] previousRenters = new String[1];
     private String series;
+
+    {
+        paymentDates[0] = "";
+        previousRenters[0] = "";
+    }
 
     public CabinBuilder setID(int id) {
         this.id = id;

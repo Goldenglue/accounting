@@ -183,8 +183,9 @@ public class CabinsTab extends Tab {
         final Button addButton = new Button("Добавить");
         addButton.setOnAction(action -> {
             Cabin cabin = new CabinBuilder()
-                    .setID(Integer.parseInt(number.getText()))
-                    .setNumber(Integer.parseInt(name.getText()))
+                    .setNumber(Integer.parseInt(number.getText()))
+                    .setName(name.getText())
+                    .setSeries(types.getValue())
                     .createCabin();
             cabinObservableList.add(cabin);
             number.clear();
