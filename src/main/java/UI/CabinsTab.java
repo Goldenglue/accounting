@@ -221,7 +221,7 @@ public class CabinsTab extends Tab {
         });
 
         final Button showInfo = new Button("Подробная информация");
-        showInfo.setOnAction(event -> showInfo(table.getSelectionModel().getSelectedItem()));
+        showInfo.setOnAction(event -> System.out.println(showInfo(table.getSelectionModel().getSelectedItem()).getKey()));
 
 
         HBox addRemoveBox = new HBox();
@@ -236,8 +236,8 @@ public class CabinsTab extends Tab {
         vBox.getChildren().addAll(addRemoveBox, table, hBox, manipulationsBox);
     }
 
-    private void showInfo(Cabin cabin) {
-        Dialog<Pair<String, String>> dialog = new Dialog<>();
+    private Pair<Boolean, Cabin> showInfo(Cabin cabin) {
+        Dialog<Pair<Boolean, Cabin>> dialog = new Dialog<>();
         dialog.setTitle(String.valueOf(cabin.getNumber()));
 
         GridPane grid = new GridPane();
@@ -273,7 +273,7 @@ public class CabinsTab extends Tab {
         grid.add(inventoryPrice, 1, rowIndex);
 
         grid.add(new Label("Дата передачи по акту:"), 0, ++rowIndex);
-        grid.add(new Label(Utils.formatDateToyyyyMMdd(cabin.getTransferDate())), 1, rowIndex);
+        grid.add(new Label(cabin.getTransferDate() == null ? "" : Utils.formatDateToyyyyMMdd(cabin.getTransferDate())), 1, rowIndex);
 
         final TextArea renter = new TextArea(cabin.getRenter());
         grid.add(new Label("Арендатор:"), 0, ++rowIndex);
@@ -317,8 +317,31 @@ public class CabinsTab extends Tab {
 
         grid.add(toStock, 0, ++rowIndex);
 
+
         dialog.getDialogPane().setContent(grid);
-        dialog.show();
+
+        dialog.setResultConverter(value -> {
+            if (value == saveType) {
+                cabin.setName(name.getText());
+                if (rentPrice.getText().matches("^[0-9]*$")) {
+                    cabin.setRentPrice(Integer.parseInt(rentPrice.getText()));
+                }
+                if (currentPaymentAmount.getText().matches("^[0-9]*$")) {
+                    cabin.setCurrentPaymentAmount(Integer.parseInt(currentPaymentAmount.getText()));
+                }
+                if (inventoryPrice.getText().matches("^[0-9]*$")) {
+                    cabin.setInventoryPrice(Integer.parseInt(inventoryPrice.getText()));
+                }
+
+                cabin.setAdditionalInfo(info.getText());
+                return new Pair<>(true, cabin);
+            } else {
+                return new Pair<>(false, cabin);
+            }
+        });
+
+        //Optional<Pair<Boolean, Cabin>> result = dialog.showAndWait();
+        return dialog.showAndWait().get();
     }
 
     public static List<Cabin> loadCabinsFromDatabase(String series) {
