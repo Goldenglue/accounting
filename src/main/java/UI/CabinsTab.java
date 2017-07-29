@@ -119,7 +119,6 @@ public class CabinsTab extends Tab {
             public void startEdit() {
                 super.startEdit();
                 Cabin cabin = (Cabin)getTableRow().getItem();
-                System.out.println(cabin.getPaymentDates());
                 getItems().setAll(cabin.getPaymentDates());
             }
         });
@@ -204,12 +203,12 @@ public class CabinsTab extends Tab {
         try {
             while (set.next()) {
                 Object[] objects = (Object[]) set.getArray(10).getArray();
-                String[] integers = new String[objects.length];
+                String[] dates = new String[objects.length];
                 for (int i = 0; i < objects.length; i++) {
                     if (objects[i] != null && objects[i] != "0") {
-                        integers[i] = (String) objects[i];
+                        dates[i] = (String) objects[i];
                     } else {
-                        integers[i] = "0";
+                        dates[i] = "0";
                     }
                 }
                 Object[] renters = (Object[]) set.getArray(13).getArray();
@@ -226,7 +225,7 @@ public class CabinsTab extends Tab {
                         set.getDate(7) != null ? set.getDate(7).toLocalDate() : null,
                         set.getString(8),
                         set.getBoolean(9),
-                        integers,
+                        dates,
                         set.getString(11),
                         set.getInt(12),
                         strings,
