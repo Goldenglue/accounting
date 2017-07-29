@@ -55,7 +55,6 @@ public class CabinsTab extends Tab {
         });
     }
 
-
     CabinsTab() {
         table = setTableUp();
         createGUI();
@@ -251,17 +250,17 @@ public class CabinsTab extends Tab {
 
         int rowIndex = 0;
 
-        grid.add(new Label("Название:"), 0, rowIndex);
 
         final TextArea name = new TextArea(cabin.getName());
         name.setPrefRowCount(2);
         name.setWrapText(true);
         name.setPrefWidth(300);
+        grid.add(new Label("Название:"), 0, rowIndex);
         grid.add(name, 1, rowIndex);
 
-        grid.add(new Label("Стоимость аренды:"), 0, ++rowIndex);
 
         final TextField rentPrice = new TextField(String.valueOf(cabin.getRentPrice()));
+        grid.add(new Label("Стоимость аренды:"), 0, ++rowIndex);
         grid.add(rentPrice, 1, rowIndex);
 
         final TextField currentPaymentAmount = new TextField(String.valueOf(cabin.getCurrentPaymentAmount()));

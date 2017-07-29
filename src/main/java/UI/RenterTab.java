@@ -10,7 +10,10 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.Pair;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,16 +22,18 @@ import java.util.List;
 
 public class RenterTab extends Tab {
     private ObservableList<Renter> renters = FXCollections.observableArrayList();
+    private VBox vBox = new VBox();
     private TableView<Renter> renterTable;
-    TableColumn<Renter, String> renterTableColumn;
-    TableColumn<Renter, Integer> rentedCabinsTableColumn;
+    private TableColumn<Renter, String> renterTableColumn;
+    private TableColumn<Renter, Integer> rentedCabinsTableColumn;
+    private TableColumn<Renter, Integer> renterDebtTableColumn;
+    private TableColumn<Renter, String> renterPhoneTableColumn;
+    private TableColumn<Renter, String> renterEmailTableColumn;
+    private TableColumn<Renter, String> renterInfoTableColumn;
 
     RenterTab() {
         setTableUp();
-        VBox vBox = new VBox();
-        vBox.setSpacing(5);
-        vBox.setPadding(new Insets(10, 0, 0, 10));
-        vBox.getChildren().addAll(setTableUp());
+        createGUI();
         setContent(vBox);
         setText("Арендаторы");
         setClosable(false);
@@ -40,11 +45,9 @@ public class RenterTab extends Tab {
         renterTable = new TableView<>();
         renterTable.setEditable(true);
 
-
         renterTableColumn = new TableColumn<>("Информация об арендаторе");
         renterTableColumn.setCellValueFactory(new PropertyValueFactory<>("renter"));
         renterTableColumn.setPrefWidth(500);
-
 
         rentedCabinsTableColumn = new TableColumn<>("Арендованные вагончики");
         rentedCabinsTableColumn.setCellValueFactory(param -> {
@@ -63,19 +66,19 @@ public class RenterTab extends Tab {
         rentedCabinsTableColumn.setEditable(true);
         rentedCabinsTableColumn.setPrefWidth(200);
 
-        TableColumn<Renter, Integer> renterDebtTableColumn = new TableColumn<>("Долг");
+        renterDebtTableColumn = new TableColumn<>("Долг");
         renterDebtTableColumn.setCellValueFactory(new PropertyValueFactory<>("debt"));
         renterDebtTableColumn.setPrefWidth(60);
 
-        TableColumn<Renter, String> renterPhoneTableColumn = new TableColumn<>("Номер телефона");
+        renterPhoneTableColumn = new TableColumn<>("Номер телефона");
         renterPhoneTableColumn.setCellValueFactory(new PropertyValueFactory<>("phone"));
         renterPhoneTableColumn.setPrefWidth(150);
 
-        TableColumn<Renter, String> renterEmailTableColumn = new TableColumn<>("Email");
+        renterEmailTableColumn = new TableColumn<>("Email");
         renterEmailTableColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
         renterEmailTableColumn.setPrefWidth(100);
 
-        TableColumn<Renter, String> renterInfoTableColumn = new TableColumn<>("Информация");
+        renterInfoTableColumn = new TableColumn<>("Информация");
         renterInfoTableColumn.setCellValueFactory(new PropertyValueFactory<>("info"));
         renterInfoTableColumn.setPrefWidth(200);
 
@@ -88,16 +91,19 @@ public class RenterTab extends Tab {
     private void createGUI() {
         final TextField renter = new TextField();
         renter.setPromptText("Арендатор");
-        renter.setPrefWidth(200);
+        renter.setPrefWidth(renterTableColumn.getPrefWidth());
 
         final TextField phone = new TextField();
         phone.setPromptText("Телефон");
+        phone.setPrefWidth(renterPhoneTableColumn.getPrefWidth());
 
         final TextField email = new TextField();
         email.setPromptText("Email");
+        email.setPrefWidth(renterEmailTableColumn.getPrefWidth());
 
         final TextField info = new TextField();
         info.setPromptText("Дополнительная информация");
+        info.setPrefWidth(renterInfoTableColumn.getPrefWidth());
 
         final Button addRenter = new Button("Добавить арендатора");
         addRenter.setOnAction(event -> {
@@ -108,6 +114,88 @@ public class RenterTab extends Tab {
                     .setInfo(info.getText())
                     .createRenter();
         });
+
+        final Button removeRenter = new Button("Удалить арендатора");
+
+        final Button showInfo = new Button("Показать информацию");
+        showInfo.setOnAction(event -> showInfo(renterTable.getSelectionModel().getSelectedItem()));
+
+        final Button rentSettings = new Button("Настройки аренды");
+
+        HBox addRenterBox = new HBox();
+        addRenterBox.getChildren().addAll(renter, phone, email, info, addRenter, removeRenter);
+
+        HBox infoAndRentBox = new HBox();
+        infoAndRentBox.getChildren().addAll(showInfo, rentSettings);
+
+        vBox.setSpacing(5);
+        vBox.setPadding(new Insets(10, 0, 0, 10));
+        vBox.getChildren().addAll(setTableUp(), addRenterBox, infoAndRentBox);
+    }
+
+    private Pair<Boolean, Renter> showInfo(Renter renter) {
+        Dialog<Pair<Boolean, Renter>> dialog = new Dialog<>();
+        dialog.setTitle("Информация об арендаторе");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        ButtonType saveType = new ButtonType("Сохранить", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelType = new ButtonType("Отменить", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveType, cancelType);
+
+        int rowIndex = 0;
+
+        final TextArea renterArea = new TextArea();
+        renterArea.setPrefRowCount(2);
+        renterArea.setPrefWidth(300);
+        renterArea.setWrapText(true);
+        renterArea.setText(renter.getRenter());
+        grid.add(new Label("Арендатель"), 0, rowIndex);
+        grid.add(renterArea, 1, rowIndex);
+
+        final ComboBox<Integer> renterCabins = new ComboBox<>();
+        renterCabins.getItems().addAll(renter.getRentedCabins());
+        renterCabins.getSelectionModel().selectFirst();
+        grid.add(new Label("Арендованые вагончики"), 0, ++rowIndex);
+        grid.add(renterCabins,1,rowIndex);
+
+        grid.add(new Label("Размер долга"),0,++rowIndex);
+        grid.add(new Label(String.valueOf(renter.getDebtAmount())),1,rowIndex);
+
+        final TextField phoneNumber = new TextField(renter.getPhoneNumber());
+        phoneNumber.setEditable(true);
+        grid.add(new Label("Номер телефона"),0,++rowIndex);
+        grid.add(phoneNumber,1,rowIndex);
+
+        final TextField email = new TextField(renter.getEmail());
+        email.setEditable(true);
+        grid.add(new Label("Email"),0,++rowIndex);
+        grid.add(email,1,rowIndex);
+
+        final TextArea info = new TextArea();
+        info.setPrefRowCount(2);
+        info.setPrefWidth(300);
+        info.setWrapText(true);
+        info.setText(renter.getInfo());
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(param -> {
+            if (param == saveType) {
+                renter.setRenter(renterArea.getText());
+                renter.setPhoneNumber(phoneNumber.getText());
+                renter.setEmail(email.getText());
+                renter.setInfo(info.getText());
+                return new Pair<>(true, renter);
+            } else {
+                return new Pair<>(false, renter);
+            }
+        });
+
+        return dialog.showAndWait().get();
     }
 
     private static List<Renter> loadRentersFromDatabase() {
