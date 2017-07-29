@@ -76,10 +76,8 @@ public class DataProcessing {
 
             preparedInsertStatement = connection.prepareStatement(insertStatement, Statement.RETURN_GENERATED_KEYS);
 
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            String formattedDate = formatter.format(payment.getDate());
             connection.setAutoCommit(false);
-            preparedInsertStatement.setDate(1, Date.valueOf(formattedDate));
+            preparedInsertStatement.setDate(1, Date.valueOf(Utils.formatDateToyyyyMMdd(payment.getDate())));
             preparedInsertStatement.setString(2, payment.getPayment());
             preparedInsertStatement.setString(3, payment.getType());
             preparedInsertStatement.setInt(4, payment.getSum());
@@ -100,24 +98,25 @@ public class DataProcessing {
         return 1;
     }
 
-    public static int insertCabinIntoDatabase(Cabin cabin, String databaseName) {
+    public static int insertCabinIntoDatabase(Cabin cabin) {
         try {
-            PreparedStatement ps = connection.prepareStatement("INSERT INTO CABINS." + databaseName + "(NAME,RENT_PRICE,CURRTEN_PAYMENT_AMOUNT,INVENTORY_PRICE,TRANSFER_DATE,RENTER,IS_PAID,INFO,NUMBER,PAYMENT_DATE) VALUES (?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, cabin.getName());
-            ps.setInt(2, cabin.getRentPrice());
-            ps.setInt(3, cabin.getCurrentPaymentAmount());
-            ps.setInt(4, cabin.getInventoryPrice());
-            if (cabin.getTransferDate() != null) {
-                ps.setDate(5, Date.valueOf(Utils.formatDateToyyyyMMdd(cabin.getTransferDate())));
-            } else {
-                ps.setDate(5, null);
-            }
-            ps.setString(6, cabin.getRenter());
-            ps.setBoolean(7, cabin.isIsPaid());
-            ps.setString(8, cabin.getAdditionalInfo());
-            ps.setInt(9, cabin.getNumber());
-            ps.setInt(10, cabin.getCurrentPaymentDate());
+            PreparedStatement ps = connection.prepareStatement("INSERT INTO CABINS.CABINS(NUMBER,NAME,RENT_PRICE,CURRTEN_PAYMENT_AMOUNT,INVENTORY_PRICE" +
+                    ",TRANSFER_DATE,RENTER,IS_PAID,PAYMENT_DATES,INFO,CURRENT_PAYMENT_DATE,PREVIOUS_RENTERS,SERIES) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+            ps.setInt(1, cabin.getNumber());
+            ps.setString(2, cabin.getName());
+            ps.setInt(3, cabin.getRentPrice());
+            ps.setInt(4, cabin.getCurrentPaymentAmount());
+            ps.setInt(5, cabin.getInventoryPrice());
+            ps.setDate(6, cabin.getTransferDate() == null ? null : Date.valueOf(Utils.formatDateToyyyyMMdd(cabin.getTransferDate())));
+            ps.setString(7, cabin.getRenter());
+            ps.setBoolean(8, cabin.isIsPaid());
+            ps.setArray(9, connection.createArrayOf("VARCHAR", cabin.getPaymentDates().toArray()));
+            ps.setString(10, cabin.getAdditionalInfo());
+            ps.setInt(11, cabin.getCurrentPaymentDate());
+            ps.setArray(12, connection.createArrayOf("VARCHAR", cabin.getPreviousRenters().toArray()));
+            ps.setString(13, "CABINS_" + cabin.getSeries().trim().replaceAll(" ","_"));
             connection.setAutoCommit(false);
+            logger.info("inserting " + cabin.toString());
             ps.executeUpdate();
             ResultSet set = ps.getGeneratedKeys();
             int key = 0;
@@ -129,19 +128,30 @@ public class DataProcessing {
             return key;
         } catch (SQLException e) {
             e.printStackTrace();
+            return 1;
         }
-        return 1;
+    }
+
+    public static void deleteCabinFromDatabase(Cabin cabin) {
+        try {
+            PreparedStatement ps = connection.prepareStatement("DELETE FROM CABINS.CABINS WHERE ID = ?");
+            ps.setInt(1,cabin.getID());
+            ps.executeUpdate();
+            logger.info("deleted cabin: " + cabin.toString());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void insertRenterIntoDatabase(Renter renter) {
         try {
             PreparedStatement ps = connection.prepareStatement("INSERT INTO RENTERS.RENTERS_INFO(RENTER,RENTED_CABINS,DEBT,PHONE,EMAIL,INFO) VALUES(?,?,?,?,?,?)");
-            ps.setString(1,renter.getRenter());
-            ps.setArray(2,connection.createArrayOf("VARCHAR(256)",renter.getRentedCabins().toArray()));
+            ps.setString(1, renter.getRenter());
+            ps.setArray(2, connection.createArrayOf("VARCHAR(256)", renter.getRentedCabins().toArray()));
             ps.setInt(3, renter.getDebtAmount());
-            ps.setString(4,renter.getPhoneNumber());
-            ps.setString(5,renter.getEmail());
-            ps.setString(6,renter.getInfo());
+            ps.setString(4, renter.getPhoneNumber());
+            ps.setString(5, renter.getEmail());
+            ps.setString(6, renter.getInfo());
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

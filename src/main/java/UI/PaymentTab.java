@@ -14,7 +14,7 @@ import java.util.Comparator;
 
 
 abstract class PaymentTab extends Tab {
-    TableView table;
+    TableView<Payment> table;
     static ObservableList<Payment> paymentObservableList = FXCollections.observableArrayList();
 
     protected abstract TableView setTableUp();

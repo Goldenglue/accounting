@@ -4,7 +4,7 @@ import database.DataProcessing;
 import dataclasses.Cabin;
 import dataclasses.CabinBuilder;
 import dataclasses.Payment;
-import javafx.beans.property.*;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -13,15 +13,20 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.Pair;
 import javafx.util.converter.IntegerStringConverter;
+import utils.Utils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -42,10 +47,16 @@ public class CabinsTab extends Tab {
     private TableColumn<Cabin, Boolean> isPaidColumn;
     private TableColumn<Cabin, Integer> paymentDateColumn;
     private TableColumn<Cabin, String> additionalInfoColumn;
+    private final Button toStock = new Button("На склад");
 
-
-    CabinsTab()
     {
+        toStock.setOnAction(event -> {
+
+        });
+    }
+
+
+    CabinsTab() {
         table = setTableUp();
         createGUI();
         setContent(vBox);
@@ -107,8 +118,8 @@ public class CabinsTab extends Tab {
 
         ObservableList<ArrayList<LocalDate>> cellData = FXCollections.observableArrayList();
         cellData.setAll(cabinObservableList.stream()
-        .map(Cabin::getPaymentDates)
-        .collect(Collectors.toList()));
+                .map(Cabin::getPaymentDates)
+                .collect(Collectors.toList()));
         TableColumn<Cabin, LocalDate> paymentDatesColumn = new TableColumn<>("Даты платежей");
         paymentDatesColumn.setCellValueFactory(param -> {
             Cabin cabin = param.getValue();
@@ -119,7 +130,7 @@ public class CabinsTab extends Tab {
             @Override
             public void startEdit() {
                 super.startEdit();
-                Cabin cabin = (Cabin)getTableRow().getItem();
+                Cabin cabin = (Cabin) getTableRow().getItem();
                 getItems().setAll(cabin.getPaymentDates());
             }
         });
@@ -150,7 +161,7 @@ public class CabinsTab extends Tab {
     }
 
     private void createGUI() {
-        List<String> tables =  new ArrayList<>();
+        List<String> tables = new ArrayList<>();
         ResultSet dataFromTable = DataProcessing.getDataFromTable("AVAILABLE_SERIES", "CABINS");
         try {
             while (dataFromTable.next()) {
@@ -187,19 +198,127 @@ public class CabinsTab extends Tab {
                     .setName(name.getText())
                     .setSeries(types.getValue())
                     .createCabin();
+            cabin.setID(DataProcessing.insertCabinIntoDatabase(cabin));
             cabinObservableList.add(cabin);
             number.clear();
             name.clear();
         });
         addButton.setDefaultButton(true);
 
-        HBox selectionBox = new HBox();
-        selectionBox.getChildren().addAll(types, selectPeriodTypes);
+        final Button removeButton = new Button("Удалить");
+        removeButton.setOnAction(event -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Удаление строки из таблицы");
+            alert.setHeaderText(null);
+            alert.setContentText("Вы действительно хотите удалить эту строку?" + "\n" + (table.getSelectionModel().getSelectedItem()).getName());
+            alert.showAndWait()
+                    .filter(response -> response == ButtonType.OK)
+                    .ifPresent(response -> {
+                        Cabin cabin = table.getSelectionModel().getSelectedItem();
+                        DataProcessing.deleteCabinFromDatabase(cabin);
+                        table.getItems().remove(cabin);
+                    });
+        });
 
-        hBox.getChildren().addAll(number, name, addButton);
+        final Button showInfo = new Button("Подробная информация");
+        showInfo.setOnAction(event -> showInfo(table.getSelectionModel().getSelectedItem()));
+
+
+        HBox addRemoveBox = new HBox();
+        addRemoveBox.getChildren().addAll(types, selectPeriodTypes);
+        hBox.getChildren().addAll(number, name, addButton, removeButton);
+
+        HBox manipulationsBox = new HBox();
+        manipulationsBox.getChildren().addAll(showInfo, toStock);
+
         vBox.setSpacing(5);
         vBox.setPadding(new Insets(10, 0, 0, 10));
-        vBox.getChildren().addAll(selectionBox, table, hBox);
+        vBox.getChildren().addAll(addRemoveBox, table, hBox, manipulationsBox);
+    }
+
+    private void showInfo(Cabin cabin) {
+        Dialog<Pair<String, String>> dialog = new Dialog<>();
+        dialog.setTitle(String.valueOf(cabin.getNumber()));
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        ButtonType saveType = new ButtonType("Сохранить", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelType = new ButtonType("Отменить", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveType, cancelType);
+
+        int rowIndex = 0;
+
+        grid.add(new Label("Название:"), 0, rowIndex);
+
+        final TextArea name = new TextArea(cabin.getName());
+        name.setPrefRowCount(2);
+        name.setWrapText(true);
+        name.setPrefWidth(300);
+        grid.add(name, 1, rowIndex);
+
+        grid.add(new Label("Стоимость аренды:"), 0, ++rowIndex);
+
+        final TextField rentPrice = new TextField(String.valueOf(cabin.getRentPrice()));
+        grid.add(rentPrice, 1, rowIndex);
+
+        final TextField currentPaymentAmount = new TextField(String.valueOf(cabin.getCurrentPaymentAmount()));
+        grid.add(new Label("Сумма текущего платежа:"), 0, ++rowIndex);
+        grid.add(currentPaymentAmount, 1, rowIndex);
+
+        final TextField inventoryPrice = new TextField(String.valueOf(cabin.getInventoryPrice()));
+        grid.add(new Label("Инвентарная стоимость:"), 0, ++rowIndex);
+        grid.add(inventoryPrice, 1, rowIndex);
+
+        grid.add(new Label("Дата передачи по акту:"), 0, ++rowIndex);
+        grid.add(new Label(Utils.formatDateToyyyyMMdd(cabin.getTransferDate())), 1, rowIndex);
+
+        final TextArea renter = new TextArea(cabin.getRenter());
+        grid.add(new Label("Арендатор:"), 0, ++rowIndex);
+        renter.setPrefRowCount(2);
+        renter.setWrapText(true);
+        renter.setEditable(false);
+        renter.setPrefWidth(300);
+        grid.add(renter, 1, rowIndex);
+
+        final CheckBox isPaid = new CheckBox() {
+            @Override
+            public void arm() {
+            }
+        };
+        isPaid.setSelected(cabin.isIsPaid());
+        grid.add(new Label("Статус оплаты:"), 0, ++rowIndex);
+        grid.add(isPaid, 1, rowIndex);
+
+        final ComboBox<LocalDate> paymentDates = new ComboBox<>();
+        paymentDates.getItems().addAll(cabin.getPaymentDates());
+        paymentDates.getSelectionModel().selectFirst();
+        grid.add(new Label("Даты оплаты"), 0, ++rowIndex);
+        grid.add(paymentDates, 1, rowIndex);
+
+        final TextArea info = new TextArea(cabin.getAdditionalInfo());
+        info.setPrefRowCount(2);
+        info.setWrapText(true);
+        info.setEditable(true);
+        info.setPrefWidth(300);
+        grid.add(new Label("Дополнительная информация"), 0, ++rowIndex);
+        grid.add(info, 1, rowIndex);
+
+        grid.add(new Label("Дата текущей оплаты"), 0, ++rowIndex);
+        grid.add(new Label(String.valueOf(cabin.getCurrentPaymentDate())), 1, rowIndex);
+
+        final ComboBox<String> previousRenters = new ComboBox<>();
+        previousRenters.getItems().addAll(cabin.getPreviousRenters());
+        previousRenters.getSelectionModel().selectFirst();
+        grid.add(new Label("Предыдущие арендаторы"), 0, ++rowIndex);
+        grid.add(previousRenters, 1, rowIndex);
+
+        grid.add(toStock, 0, ++rowIndex);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.show();
     }
 
     public static List<Cabin> loadCabinsFromDatabase(String series) {
@@ -207,7 +326,7 @@ public class CabinsTab extends Tab {
         List<Cabin> cabins = new ArrayList<>();
         try {
             while (set.next()) {
-                Object[] objects = (Object[]) set.getArray(10).getArray();
+                Object[] objects = (Object[]) set.getArray(9).getArray();
                 String[] dates = new String[objects.length];
                 for (int i = 0; i < objects.length; i++) {
                     if (objects[i] != null && objects[i] != "0") {
@@ -216,26 +335,26 @@ public class CabinsTab extends Tab {
                         dates[i] = "0";
                     }
                 }
-                Object[] renters = (Object[]) set.getArray(13).getArray();
+                Object[] renters = (Object[]) set.getArray(12).getArray();
                 String[] strings = new String[renters.length];
                 for (int i = 0; i < renters.length; i++) {
                     strings[i] = renters[i].toString();
                 }
                 cabins.add(new CabinBuilder()
-                        .setID(set.getInt(1))
-                        .setNumber(set.getInt(2))
-                        .setName(set.getString(3))
-                        .setRentPrice(set.getInt(4))
-                        .setCurrentPaymentAmount(set.getInt(5))
-                        .setInventoryPrice(set.getInt(6))
-                        .setTransferDate(set.getDate(7) != null ? set.getDate(7).toLocalDate() : null)
-                        .setRenter(set.getString(8))
-                        .setIsPaid(set.getBoolean(9))
+                        .setNumber(set.getInt(1))
+                        .setName(set.getString(2))
+                        .setRentPrice(set.getInt(3))
+                        .setCurrentPaymentAmount(set.getInt(4))
+                        .setInventoryPrice(set.getInt(5))
+                        .setTransferDate(set.getDate(6) != null ? set.getDate(6).toLocalDate() : null)
+                        .setRenter(set.getString(7))
+                        .setIsPaid(set.getBoolean(8))
                         .setPaymentDates(dates)
-                        .setAdditionalInfo(set.getString(11))
-                        .setCurrentPaymentDate(set.getInt(12))
+                        .setAdditionalInfo(set.getString(10))
+                        .setCurrentPaymentDate(set.getInt(11))
                         .setPreviousRenters(strings)
-                        .setSeries(set.getString(14))
+                        .setSeries(set.getString(13))
+                        .setID(set.getInt(14))
                         .createCabin());
             }
             cabins.sort(Comparator.comparingInt(Cabin::getNumber));

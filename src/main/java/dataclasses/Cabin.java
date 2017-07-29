@@ -226,4 +226,23 @@ public class Cabin {
     }
 
 
+    @Override
+    public String toString() {
+        return "Cabin{" +
+                "ID=" + ID +
+                ", number=" + number +
+                ", name=" + name +
+                ", rentPrice=" + rentPrice +
+                ", currentPaymentAmount=" + currentPaymentAmount +
+                ", inventoryPrice=" + inventoryPrice +
+                ", transferDate=" + transferDate +
+                ", renter=" + renter +
+                ", isPaid=" + isPaid +
+                ", paymentDates=" + paymentDates +
+                ", additionalInfo=" + additionalInfo +
+                ", currentPaymentDate=" + currentPaymentDate +
+                ", previousRenters=" + previousRenters +
+                ", series=" + series +
+                '}';
+    }
 }

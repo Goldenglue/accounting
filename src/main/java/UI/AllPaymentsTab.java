@@ -188,7 +188,6 @@ public class AllPaymentsTab extends PaymentTab {
                     .setSum(Integer.parseInt(addSum.getText()))
                     .createPayment();
             payment.setID(DataProcessing.insertPaymentIntoDatabase(payment, periodComboBox.getValue()));
-
             paymentObservableList.add(payment);
             addPayment.clear();
             addSum.clear();
@@ -200,11 +199,11 @@ public class AllPaymentsTab extends PaymentTab {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("Удаление строки из таблицы");
             alert.setHeaderText(null);
-            alert.setContentText("Вы действительно хотите удалить эту строку?" + "\n" + ((Payment) table.getSelectionModel().getSelectedItem()).getPayment());
+            alert.setContentText("Вы действительно хотите удалить эту строку?" + "\n" + (table.getSelectionModel().getSelectedItem()).getPayment());
             alert.showAndWait()
                     .filter(response -> response == ButtonType.OK)
                     .ifPresent(response -> {
-                        Payment payment = (Payment) table.getSelectionModel().getSelectedItem();
+                        Payment payment = table.getSelectionModel().getSelectedItem();
                         DataProcessing.deletePaymentFromDatabase(payment, periodComboBox.getValue());
                         table.getItems().remove(payment);
                     });
@@ -225,7 +224,7 @@ public class AllPaymentsTab extends PaymentTab {
         Dialog<Pair<String, String>> dialog = new Dialog<>();
         dialog.setTitle("Платеж");
 
-        ButtonType payType = new ButtonType("Pay", ButtonBar.ButtonData.OK_DONE);
+        ButtonType payType = new ButtonType("Оплатить", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(payType, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
@@ -294,7 +293,7 @@ public class AllPaymentsTab extends PaymentTab {
 
     public static class LocalDateCellFactory extends TableCell<Payment, LocalDate> {
         final TextField textField = new TextField();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
         LocalDateCellFactory() {
             textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
