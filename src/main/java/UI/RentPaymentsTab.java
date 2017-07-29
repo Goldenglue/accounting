@@ -1,5 +1,6 @@
 package UI;
 
+import dataclasses.Payment;
 import javafx.geometry.Insets;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -11,15 +12,15 @@ import javafx.util.converter.IntegerStringConverter;
 
 import java.time.LocalDate;
 
-public class RentPaymentsTab extends AbstractTab {
+public class RentPaymentsTab extends PaymentTab {
     private final HBox hBox = new HBox();
     private final VBox vBox = new VBox();
-    private TableColumn<PaymentTab.Payment, LocalDate> dateColumn;
-    private TableColumn<PaymentTab.Payment, Integer> numberColumn;
-    private TableColumn<PaymentTab.Payment, String> paymentColumn;
-    private TableColumn<PaymentTab.Payment, String> unitColumn;
-    private TableColumn<PaymentTab.Payment, Integer> priceColumn;
-    private TableColumn<PaymentTab.Payment, Integer> sumColumn;
+    private TableColumn<Payment, LocalDate> dateColumn;
+    private TableColumn<Payment, Integer> numberColumn;
+    private TableColumn<Payment, String> paymentColumn;
+    private TableColumn<Payment, String> unitColumn;
+    private TableColumn<Payment, Integer> priceColumn;
+    private TableColumn<Payment, Integer> sumColumn;
 
     RentPaymentsTab() {
         table = setTableUp();
@@ -32,13 +33,13 @@ public class RentPaymentsTab extends AbstractTab {
     }
 
     @Override
-    protected TableView<PaymentTab.Payment> setTableUp() {
-        TableView<PaymentTab.Payment> table = new TableView<>();
+    protected TableView<Payment> setTableUp() {
+        TableView<Payment> table = new TableView<>();
         table.setEditable(false);
 
         dateColumn = new TableColumn<>("Дата");
         dateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
-        dateColumn.setCellFactory(column -> new PaymentTab.LocalDateCellFactory());
+        dateColumn.setCellFactory(column -> new AllPaymentsTab.LocalDateCellFactory());
         dateColumn.setPrefWidth(100);
 
         numberColumn = new TableColumn<>("№ п/п");

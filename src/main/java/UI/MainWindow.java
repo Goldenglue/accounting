@@ -6,13 +6,13 @@ import javafx.stage.Stage;
 
 
 public class MainWindow {
-    private static PaymentTab paymentTab;
+    private static AllPaymentsTab allPaymentsTab;
     private static RentPaymentsTab rentPaymentsTab;
     private static MechanismsPaymentTab mechanismsPaymentTab;
     private static CabinsTab cabinsTab;
 
     static {
-        paymentTab = getPaymentsTab();
+        allPaymentsTab = getPaymentsTab();
         rentPaymentsTab = getRentPaymentsTab();
         mechanismsPaymentTab = getMechanismsTab();
         cabinsTab = getCabinsTab();
@@ -21,14 +21,14 @@ public class MainWindow {
     public static void launch(Stage primaryStage) {
         primaryStage.setTitle("Учет");
         TabPane tabPane = new TabPane();
-        tabPane.getTabs().addAll(paymentTab, rentPaymentsTab, mechanismsPaymentTab, cabinsTab);
+        tabPane.getTabs().addAll(allPaymentsTab, rentPaymentsTab, mechanismsPaymentTab, cabinsTab);
         Scene scene = new Scene(tabPane);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    private static PaymentTab getPaymentsTab() {
-        return new PaymentTab();
+    private static AllPaymentsTab getPaymentsTab() {
+        return new AllPaymentsTab();
     }
 
     private static RentPaymentsTab getRentPaymentsTab() {

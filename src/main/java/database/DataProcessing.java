@@ -1,7 +1,8 @@
 package database;
 
 import UI.CabinsTab;
-import UI.PaymentTab;
+import dataclasses.Cabin;
+import dataclasses.Payment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.h2.tools.RunScript;
@@ -17,7 +18,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class DataProcessing {
     private static Connection connection;
@@ -67,7 +67,7 @@ public class DataProcessing {
         logger.info("Created database " + date);
     }
 
-    public static int insertPaymentIntoDatabase(PaymentTab.Payment payment, String period) {
+    public static int insertPaymentIntoDatabase(Payment payment, String period) {
         try {
             PreparedStatement preparedInsertStatement;
 
@@ -99,7 +99,7 @@ public class DataProcessing {
         return 1;
     }
 
-    public static int insertCabinIntoDatabase(CabinsTab.Cabin cabin, String databaseName) {
+    public static int insertCabinIntoDatabase(Cabin cabin, String databaseName) {
         try {
             PreparedStatement ps = connection.prepareStatement("INSERT INTO CABINS." + databaseName + "(NAME,RENT_PRICE,CURRTEN_PAYMENT_AMOUNT,INVENTORY_PRICE,TRANSFER_DATE,RENTER,IS_PAID,INFO,NUMBER,PAYMENT_DATE) VALUES (?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, cabin.getName());
@@ -156,7 +156,7 @@ public class DataProcessing {
         return renters;
     }
 
-    public static void updatePayment(PaymentTab.Payment payment, String period) {
+    public static void updatePayment(Payment payment, String period) {
         PreparedStatement preparedUpdateStatement;
 
         try {
@@ -173,7 +173,7 @@ public class DataProcessing {
         }
     }
 
-    public static void deletePaymentFromDatabase(PaymentTab.Payment payment, String period) {
+    public static void deletePaymentFromDatabase(Payment payment, String period) {
         PreparedStatement preparedDeleteStatement;
 
         String deleteStatement = "DELETE FROM PAYMENTS." + period + " WHERE ID = ?";
@@ -289,8 +289,8 @@ public class DataProcessing {
         return null;
     }
 
-    public static CabinsTab.Cabin getCabinByRenterAndNumber(String renter, Integer number) {
-        List<CabinsTab.Cabin> cabins = new ArrayList<>();
+    public static Cabin getCabinByRenterAndNumber(String renter, Integer number) {
+        List<Cabin> cabins = new ArrayList<>();
         cabinsTablesNames.forEach(name -> cabins.addAll(CabinsTab.loadCabinsFromDatabase(name)));
         return cabins.stream()
                 .filter(cabin -> cabin.getNumber() == number && cabin.getRenter().equals(renter))
@@ -298,7 +298,7 @@ public class DataProcessing {
                 .get();
     }
 
-    public static void updateCabinStatus(String table, CabinsTab.Cabin cabin) {
+    public static void updateCabinStatus(String table, Cabin cabin) {
         try {
             PreparedStatement ps = connection.prepareStatement("UPDATE CABINS." + table + " SET IS_PAID = ?, PAYMENT_DATES = ?, CURRENT_PAYMENT_DATE = ? WHERE ID = ?");
             ps.setBoolean(1, cabin.isIsPaid());

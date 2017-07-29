@@ -4,7 +4,7 @@ package core;
 
 
 import UI.CabinsTab;
-import database.DataProcessing;
+import dataclasses.Cabin;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -101,7 +101,7 @@ public class ExcelLoader {
                         number = Double.valueOf(cellList.get(0).getStringCellValue());
                     }
 
-                    CabinsTab.Cabin cabin = new CabinsTab.Cabin(number.intValue(),cellList.get(1).getStringCellValue(),rentPrice.intValue(),currentPaymentAmount.intValue(),invPrice.intValue(),localDate,cellList.get(6).getStringCellValue(),0,false,null);
+                    Cabin cabin = new Cabin(number.intValue(),cellList.get(1).getStringCellValue(),rentPrice.intValue(),currentPaymentAmount.intValue(),invPrice.intValue(),localDate,cellList.get(6).getStringCellValue(),0,false,null);
                     CabinsTab.cabinObservableList.add(cabin);
                     //System.out.println("on row number: " + row.getRowNum() + " " + cabin.getName());
                 }
