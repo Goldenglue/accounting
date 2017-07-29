@@ -3,7 +3,9 @@ package UI;
 import database.DataProcessing;
 import dataclasses.Cabin;
 import dataclasses.Payment;
-import javafx.beans.property.*;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Side;
@@ -16,13 +18,10 @@ import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 import javafx.util.converter.IntegerStringConverter;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -116,17 +115,7 @@ public class AllPaymentsTab extends PaymentTab {
 
     @Override
     protected void loadFromDatabase(String period) {
-        ResultSet resultSet = DataProcessing.getDataFromTable(period, "PAYMENTS");
-
-        try {
-            while (resultSet.next()) {
-                paymentObservableList.add(new Payment(resultSet.getDate(2).toLocalDate(),
-                        resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5), resultSet.getInt(1)));
-                paymentObservableList.sort(Comparator.comparingInt(Payment::getID));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        super.loadFromDatabase(period);
     }
 
     @Override
@@ -296,7 +285,6 @@ public class AllPaymentsTab extends PaymentTab {
         Button pay = new Button("Оплатить");
         Button cancel = new Button("Отмена");
     }
-
 
 
     public static class LocalDateCellFactory extends TableCell<Payment, LocalDate> {

@@ -1,5 +1,7 @@
 package UI;
 
-public class RenterTab {
+import javafx.scene.control.Tab;
+
+public class RenterTab extends Tab {
 
 }

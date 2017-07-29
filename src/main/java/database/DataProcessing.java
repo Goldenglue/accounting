@@ -22,7 +22,7 @@ import java.util.List;
 public class DataProcessing {
     private static Connection connection;
     private static Logger logger = LogManager.getLogger();
-    private static List<String> cabinsTablesNames;
+    private static List<String> cabinsSeries;
 
 
     public static void connectToDatabase() throws SQLException {
@@ -34,11 +34,11 @@ public class DataProcessing {
         try {
             connection = DriverManager.getConnection("jdbc:h2:~/accounting/data;ifexists=true", "", "");
             logger.info("Successfully connected to database");
-            cabinsTablesNames = getAvailableTableNames("CABINS");
+            cabinsSeries = getAvailableTableNames("CABINS");
         } catch (SQLException e) {
             connection = DriverManager.getConnection("jdbc:h2:~/accounting/data;create=true", "", "");
             initDatabase();
-            cabinsTablesNames = getAvailableTableNames("CABINS");
+            cabinsSeries = getAvailableTableNames("CABINS");
             logger.info("Created new database");
         }
     }
@@ -216,6 +216,17 @@ public class DataProcessing {
         }
     }
 
+    public static ResultSet getCabinsFromDatabase(String series) {
+        try {
+            PreparedStatement ps = connection.prepareStatement("SELECT * FROM CABINS.CABINS WHERE SERIES = ? ");
+            ps.setString(1, series);
+            return ps.executeQuery();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public static void backupDatabase() {
         try {
             if (!Files.exists(Paths.get("init.sql"))) {
@@ -223,6 +234,7 @@ public class DataProcessing {
             }
             Statement statement = connection.createStatement();
             statement.execute("SCRIPT TO 'init.sql'");
+            statement.execute("SCRIPT TO 'extraBackup.sql'");
         } catch (SQLException | IOException e) {
             e.printStackTrace();
         }
@@ -291,7 +303,7 @@ public class DataProcessing {
 
     public static Cabin getCabinByRenterAndNumber(String renter, Integer number) {
         List<Cabin> cabins = new ArrayList<>();
-        cabinsTablesNames.forEach(name -> cabins.addAll(CabinsTab.loadCabinsFromDatabase(name)));
+        cabinsSeries.forEach(name -> cabins.addAll(CabinsTab.loadCabinsFromDatabase(name)));
         return cabins.stream()
                 .filter(cabin -> cabin.getNumber() == number && cabin.getRenter().equals(renter))
                 .findFirst()

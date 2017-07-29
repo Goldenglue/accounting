@@ -150,7 +150,15 @@ public class CabinsTab extends Tab {
     }
 
     private void createGUI() {
-        List<String> tables = DataProcessing.getAvailableTableNames("CABINS");
+        List<String> tables =  new ArrayList<>();
+        ResultSet dataFromTable = DataProcessing.getDataFromTable("AVAILABLE_SERIES", "CABINS");
+        try {
+            while (dataFromTable.next()) {
+                tables.add(dataFromTable.getString(1));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         final ComboBox<String> types = new ComboBox<>();
         types.getItems().addAll(tables.stream()
                 .map(s -> s.replaceAll("_", " "))
@@ -190,8 +198,8 @@ public class CabinsTab extends Tab {
         vBox.getChildren().addAll(selectionBox, table, hBox);
     }
 
-    public static List<Cabin> loadCabinsFromDatabase(String table) {
-        ResultSet set = DataProcessing.getDataFromTable(table, "CABINS");
+    public static List<Cabin> loadCabinsFromDatabase(String series) {
+        ResultSet set = DataProcessing.getCabinsFromDatabase(series);
         List<Cabin> cabins = new ArrayList<>();
         try {
             while (set.next()) {
