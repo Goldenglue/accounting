@@ -2,13 +2,12 @@ package UI;
 
 import database.DataProcessing;
 import dataclasses.Renter;
+import dataclasses.RenterBuilder;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
@@ -20,6 +19,9 @@ import java.util.List;
 
 public class RenterTab extends Tab {
     private ObservableList<Renter> renters = FXCollections.observableArrayList();
+    private TableView<Renter> renterTable;
+    TableColumn<Renter, String> renterTableColumn;
+    TableColumn<Renter, Integer> rentedCabinsTableColumn;
 
     RenterTab() {
         setTableUp();
@@ -34,14 +36,17 @@ public class RenterTab extends Tab {
     }
 
     private TableView<Renter> setTableUp() {
-        TableView<Renter> renterTable = new TableView<>();
+
+        renterTable = new TableView<>();
         renterTable.setEditable(true);
 
-        TableColumn<Renter, String> renterTableColumn = new TableColumn<>("Информация об арендаторе");
+
+        renterTableColumn = new TableColumn<>("Информация об арендаторе");
         renterTableColumn.setCellValueFactory(new PropertyValueFactory<>("renter"));
         renterTableColumn.setPrefWidth(500);
 
-        TableColumn<Renter, Integer> rentedCabinsTableColumn = new TableColumn<>("Арендованные вагончики");
+
+        rentedCabinsTableColumn = new TableColumn<>("Арендованные вагончики");
         rentedCabinsTableColumn.setCellValueFactory(param -> {
             Renter renter = param.getValue();
             Integer cabinNumber = renter.getRentedCabins().isEmpty() ? null : renter.getRentedCabins().get(0);
@@ -70,9 +75,39 @@ public class RenterTab extends Tab {
         renterEmailTableColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
         renterEmailTableColumn.setPrefWidth(100);
 
+        TableColumn<Renter, String> renterInfoTableColumn = new TableColumn<>("Информация");
+        renterInfoTableColumn.setCellValueFactory(new PropertyValueFactory<>("info"));
+        renterInfoTableColumn.setPrefWidth(200);
+
         renterTable.setItems(renters);
-        renterTable.getColumns().addAll(renterTableColumn, rentedCabinsTableColumn, renterDebtTableColumn, renterPhoneTableColumn, renterEmailTableColumn);
+        renterTable.getColumns().addAll(renterTableColumn, rentedCabinsTableColumn, renterDebtTableColumn,
+                renterPhoneTableColumn, renterEmailTableColumn, renterInfoTableColumn);
         return renterTable;
+    }
+
+    private void createGUI() {
+        final TextField renter = new TextField();
+        renter.setPromptText("Арендатор");
+        renter.setPrefWidth(200);
+
+        final TextField phone = new TextField();
+        phone.setPromptText("Телефон");
+
+        final TextField email = new TextField();
+        email.setPromptText("Email");
+
+        final TextField info = new TextField();
+        info.setPromptText("Дополнительная информация");
+
+        final Button addRenter = new Button("Добавить арендатора");
+        addRenter.setOnAction(event -> {
+            new RenterBuilder()
+                    .setRenter(renter.getText())
+                    .setPhoneNumber(phone.getText())
+                    .setEmail(email.getText())
+                    .setInfo(info.getText())
+                    .createRenter();
+        });
     }
 
     private static List<Renter> loadRentersFromDatabase() {
@@ -85,7 +120,14 @@ public class RenterTab extends Tab {
                 for (int i = 0; i < objects.length; i++) {
                     numbers[i] = Integer.parseInt((String) objects[i]);
                 }
-                renters.add(new Renter(set.getString(1), numbers, set.getInt(3), set.getString(4), set.getString(5)));
+                renters.add(new RenterBuilder()
+                        .setRenter(set.getString(1))
+                        .setRentedCabins(numbers)
+                        .setDebtAmount(set.getInt(3))
+                        .setPhoneNumber(set.getString(4))
+                        .setEmail(set.getString(5))
+                        .setInfo(set.getString(6))
+                        .createRenter());
             }
             return renters;
         } catch (SQLException e) {

@@ -13,15 +13,7 @@ public class Payment {
     private final SimpleIntegerProperty sum;
     private SimpleIntegerProperty ID;
 
-    public Payment(LocalDate date, String payment, String type, int sum) {
-        this.date = new SimpleObjectProperty<>(date);
-        this.payment = new SimpleStringProperty(payment);
-        this.type = new SimpleStringProperty(type);
-        this.sum = new SimpleIntegerProperty(sum);
-        this.ID = new SimpleIntegerProperty(0);
-    }
-
-    public Payment(LocalDate date, String payment, String type, int sum, int ID) {
+    Payment(LocalDate date, String payment, String type, int sum, int ID) {
         this.date = new SimpleObjectProperty<>(date);
         this.payment = new SimpleStringProperty(payment);
         this.type = new SimpleStringProperty(type);

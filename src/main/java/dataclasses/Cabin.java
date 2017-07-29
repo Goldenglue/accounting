@@ -28,12 +28,6 @@ public class Cabin {
     private SimpleObjectProperty<ArrayList<String>> previousRenters;
     private SimpleStringProperty series;
 
-    public Cabin(int number, String name) {
-        this.number = new SimpleIntegerProperty(number);
-        this.name = new SimpleStringProperty(name);
-    }
-
-
     public Cabin(int ID, int number, String name, int rentPrice, int currentPaymentAmount, int inventoryPrice, LocalDate transferDate, String renter, boolean isPaid, String[] paymentDates, String additionalInfo, int currentPaymentDate, String[] previousRenters, String series) {
         this.ID = new SimpleIntegerProperty(ID);
         this.number = new SimpleIntegerProperty(number);
@@ -55,19 +49,6 @@ public class Cabin {
         this.previousRenters = new SimpleObjectProperty<>(new ArrayList<>());
         this.previousRenters.get().addAll(Arrays.asList(previousRenters));
         this.series = new SimpleStringProperty(series);
-    }
-
-    public Cabin(int number, String name, int rentPrice, int currentPaymentAmount, int inventoryPrice, LocalDate transferDate, String renter, int currentPaymentDate, boolean isPaid, String additionalInfo) {
-        this.number = new SimpleIntegerProperty(number);
-        this.name = new SimpleStringProperty(name);
-        this.rentPrice = new SimpleIntegerProperty(rentPrice);
-        this.currentPaymentAmount = new SimpleIntegerProperty(currentPaymentAmount);
-        this.inventoryPrice = new SimpleIntegerProperty(inventoryPrice);
-        this.transferDate = new SimpleObjectProperty<>(transferDate);
-        this.renter = new SimpleStringProperty(renter);
-        this.currentPaymentDate = new SimpleIntegerProperty(currentPaymentDate);
-        this.isPaid = new SimpleBooleanProperty(isPaid);
-        this.additionalInfo = new SimpleStringProperty(additionalInfo);
     }
 
     public void payForCabin(LocalDate date) {

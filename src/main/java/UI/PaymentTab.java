@@ -2,6 +2,7 @@ package UI;
 
 import database.DataProcessing;
 import dataclasses.Payment;
+import dataclasses.PaymentBuilder;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Tab;
@@ -22,8 +23,7 @@ abstract class PaymentTab extends Tab {
         ResultSet resultSet = DataProcessing.getDataFromTable(period, "PAYMENTS");
         try {
             while (resultSet.next()) {
-                paymentObservableList.add(new Payment(resultSet.getDate(2).toLocalDate(),
-                        resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5), resultSet.getInt(1)));
+                paymentObservableList.add(new PaymentBuilder().setDate(resultSet.getDate(2).toLocalDate()).setPayment(resultSet.getString(3)).setType(resultSet.getString(4)).setSum(resultSet.getInt(5)).setID(resultSet.getInt(1)).createPayment());
                 paymentObservableList.sort(Comparator.comparingInt(Payment::getID));
             }
         } catch (SQLException e) {

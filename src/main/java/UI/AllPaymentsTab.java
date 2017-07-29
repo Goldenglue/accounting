@@ -3,6 +3,7 @@ package UI;
 import database.DataProcessing;
 import dataclasses.Cabin;
 import dataclasses.Payment;
+import dataclasses.PaymentBuilder;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -180,8 +181,12 @@ public class AllPaymentsTab extends PaymentTab {
             if (typeComboBox.getValue().equals("Аренда")) {
                 createPaymentDialog(addPayment.getText(), Integer.parseInt(addSum.getText()));
             }
-            Payment payment = new Payment(datePicker.getValue(), addPayment.getText(),
-                    typeComboBox.getValue(), Integer.parseInt(addSum.getText()));
+            Payment payment = new PaymentBuilder()
+                    .setDate(datePicker.getValue())
+                    .setPayment(addPayment.getText())
+                    .setType(typeComboBox.getValue())
+                    .setSum(Integer.parseInt(addSum.getText()))
+                    .createPayment();
             payment.setID(DataProcessing.insertPaymentIntoDatabase(payment, periodComboBox.getValue()));
 
             paymentObservableList.add(payment);

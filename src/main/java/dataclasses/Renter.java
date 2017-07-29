@@ -13,14 +13,16 @@ public class Renter {
     private SimpleIntegerProperty debtAmount;
     private SimpleStringProperty phoneNumber;
     private SimpleStringProperty email;
+    private SimpleStringProperty info;
 
-    public Renter(String renter, Integer[] rentedCabins, Integer debtAmount, String phoneNumber, String email) {
+    Renter(String renter, Integer[] rentedCabins, Integer debtAmount, String phoneNumber, String email, String info) {
         this.renter = new SimpleStringProperty(renter);
         this.rentedCabins = new SimpleObjectProperty<>(new ArrayList<>());
         this.rentedCabins.get().addAll(Arrays.asList(rentedCabins));
         this.debtAmount = new SimpleIntegerProperty(debtAmount);
         this.phoneNumber = new SimpleStringProperty(phoneNumber);
         this.email = new SimpleStringProperty(email);
+        this.info = new SimpleStringProperty(info);
     }
 
     public String getRenter() {
@@ -81,5 +83,17 @@ public class Renter {
 
     public void setEmail(String email) {
         this.email.set(email);
+    }
+
+    public String getInfo() {
+        return info.get();
+    }
+
+    public SimpleStringProperty infoProperty() {
+        return info;
+    }
+
+    public void setInfo(String info) {
+        this.info.set(info);
     }
 }

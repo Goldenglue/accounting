@@ -2,6 +2,7 @@ package UI;
 
 import database.DataProcessing;
 import dataclasses.Cabin;
+import dataclasses.CabinBuilder;
 import dataclasses.Payment;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -181,7 +182,10 @@ public class CabinsTab extends Tab {
 
         final Button addButton = new Button("Добавить");
         addButton.setOnAction(action -> {
-            Cabin cabin = new Cabin(Integer.parseInt(number.getText()), name.getText());
+            Cabin cabin = new CabinBuilder()
+                    .setID(Integer.parseInt(number.getText()))
+                    .setNumber(Integer.parseInt(name.getText()))
+                    .createCabin();
             cabinObservableList.add(cabin);
             number.clear();
             name.clear();
@@ -216,20 +220,22 @@ public class CabinsTab extends Tab {
                 for (int i = 0; i < renters.length; i++) {
                     strings[i] = renters[i].toString();
                 }
-                cabins.add(new Cabin(set.getInt(1),
-                        set.getInt(2),
-                        set.getString(3),
-                        set.getInt(4),
-                        set.getInt(5),
-                        set.getInt(6),
-                        set.getDate(7) != null ? set.getDate(7).toLocalDate() : null,
-                        set.getString(8),
-                        set.getBoolean(9),
-                        dates,
-                        set.getString(11),
-                        set.getInt(12),
-                        strings,
-                        set.getString(14)));
+                cabins.add(new CabinBuilder()
+                        .setID(set.getInt(1))
+                        .setNumber(set.getInt(2))
+                        .setName(set.getString(3))
+                        .setRentPrice(set.getInt(4))
+                        .setCurrentPaymentAmount(set.getInt(5))
+                        .setInventoryPrice(set.getInt(6))
+                        .setTransferDate(set.getDate(7) != null ? set.getDate(7).toLocalDate() : null)
+                        .setRenter(set.getString(8))
+                        .setIsPaid(set.getBoolean(9))
+                        .setPaymentDates(dates)
+                        .setAdditionalInfo(set.getString(11))
+                        .setCurrentPaymentDate(set.getInt(12))
+                        .setPreviousRenters(strings)
+                        .setSeries(set.getString(14))
+                        .createCabin());
             }
             cabins.sort(Comparator.comparingInt(Cabin::getNumber));
         } catch (SQLException e) {

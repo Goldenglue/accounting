@@ -3,6 +3,7 @@ package database;
 import UI.CabinsTab;
 import dataclasses.Cabin;
 import dataclasses.Payment;
+import dataclasses.Renter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.h2.tools.RunScript;
@@ -132,11 +133,16 @@ public class DataProcessing {
         return 1;
     }
 
-    public static void insertRenterIntoDatabase(String info) {
+    public static void insertRenterIntoDatabase(Renter renter) {
         try {
-            PreparedStatement statement = connection.prepareStatement("INSERT INTO RENTERS.RENTERS_INFO(RENTER) VALUES(?)");
-            statement.setString(1, info);
-            statement.executeUpdate();
+            PreparedStatement ps = connection.prepareStatement("INSERT INTO RENTERS.RENTERS_INFO(RENTER,RENTED_CABINS,DEBT,PHONE,EMAIL,INFO) VALUES(?,?,?,?,?,?)");
+            ps.setString(1,renter.getRenter());
+            ps.setArray(2,connection.createArrayOf("VARCHAR(256)",renter.getRentedCabins().toArray()));
+            ps.setInt(3, renter.getDebtAmount());
+            ps.setString(4,renter.getPhoneNumber());
+            ps.setString(5,renter.getEmail());
+            ps.setString(6,renter.getInfo());
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
