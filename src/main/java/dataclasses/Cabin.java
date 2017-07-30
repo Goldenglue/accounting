@@ -1,9 +1,11 @@
 package dataclasses;
 
+import UI.StockStatus;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import jdk.nashorn.internal.runtime.StoredScript;
 import utils.Utils;
 
 import java.time.LocalDate;
@@ -27,8 +29,9 @@ public class Cabin {
     private SimpleIntegerProperty currentPaymentDate;
     private SimpleObjectProperty<ArrayList<String>> previousRenters;
     private SimpleStringProperty series;
+    private SimpleObjectProperty<StockStatus> status;
 
-    public Cabin(int ID, int number, String name, int rentPrice, int currentPaymentAmount, int inventoryPrice, LocalDate transferDate, String renter, boolean isPaid, String[] paymentDates, String additionalInfo, int currentPaymentDate, String[] previousRenters, String series) {
+    public Cabin(int ID, int number, String name, int rentPrice, int currentPaymentAmount, int inventoryPrice, LocalDate transferDate, String renter, boolean isPaid, String[] paymentDates, String additionalInfo, int currentPaymentDate, String[] previousRenters, String series, StockStatus status) {
         this.ID = new SimpleIntegerProperty(ID);
         this.number = new SimpleIntegerProperty(number);
         this.name = new SimpleStringProperty(name);
@@ -49,6 +52,7 @@ public class Cabin {
         this.previousRenters = new SimpleObjectProperty<>(new ArrayList<>());
         this.previousRenters.get().addAll(Arrays.asList(previousRenters));
         this.series = new SimpleStringProperty(series);
+        this.status = new SimpleObjectProperty<>(status);
     }
 
     public void payForCabin(LocalDate date) {
@@ -225,6 +229,18 @@ public class Cabin {
         this.previousRenters.set(previousRenters);
     }
 
+    public StockStatus getStatus() {
+        return status.get();
+    }
+
+    public SimpleObjectProperty<StockStatus> statusProperty() {
+        return status;
+    }
+
+    public void setStatus(StockStatus status) {
+        this.status.set(status);
+    }
+
 
     @Override
     public String toString() {
@@ -243,6 +259,7 @@ public class Cabin {
                 ", currentPaymentDate=" + currentPaymentDate +
                 ", previousRenters=" + previousRenters +
                 ", series=" + series +
+                ", status=" + status +
                 '}';
     }
 }

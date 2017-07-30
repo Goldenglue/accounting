@@ -24,8 +24,6 @@ import java.util.List;
 public class DataProcessing {
     private static Connection connection;
     private static Logger logger = LogManager.getLogger();
-    private static List<String> cabinsSeries;
-
 
     public static void connectToDatabase() throws SQLException {
         try {
@@ -36,11 +34,9 @@ public class DataProcessing {
         try {
             connection = DriverManager.getConnection("jdbc:h2:~/accounting/data;ifexists=true", "", "");
             logger.info("Successfully connected to database");
-            cabinsSeries = getAvailableTableNames("CABINS");
         } catch (SQLException e) {
             connection = DriverManager.getConnection("jdbc:h2:~/accounting/data;create=true", "", "");
             initDatabase();
-            cabinsSeries = getAvailableTableNames("CABINS");
             logger.info("Created new database");
         }
     }

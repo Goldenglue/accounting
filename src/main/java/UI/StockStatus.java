@@ -1,11 +1,11 @@
 package UI;
 
 public enum StockStatus {
-    IN_STOCK("На складе"), NOT_IN_STOCK("В аренде");
+    IN_STOCK("На складе"), NOT_IN_STOCK("В аренде"), ANY("Все");
 
     private String status;
 
-    private StockStatus(String status) {
+    StockStatus(String status) {
         this.status = status;
     }
 
@@ -15,8 +15,6 @@ public enum StockStatus {
 
     @Override
     public String toString() {
-        return "StockStatus{" +
-                "status='" + status + '\'' +
-                '}';
+        return status;
     }
 }

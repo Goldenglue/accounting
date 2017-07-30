@@ -19,6 +19,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 import javafx.util.converter.IntegerStringConverter;
+import jdk.nashorn.internal.runtime.StoredScript;
 import utils.Utils;
 
 import java.sql.ResultSet;
@@ -28,6 +29,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -147,9 +149,14 @@ public class CabinsTab extends Tab implements Loadable {
         previousRentersColumn.setEditable(false);
         previousRentersColumn.setPrefWidth(100);
 
+        TableColumn<Cabin, String> statusTableColumn = new TableColumn<>("Статус");
+        statusTableColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+        statusTableColumn.setPrefWidth(80);
+        statusTableColumn.setEditable(false);
+
         table.setItems(cabinObservableList);
         table.getColumns().addAll(numberColumn, nameColumn, rentPriceColumn, currentPaymentColumn, inventoryPriceColumn, transferDateColumn, renterInfoColumn, paymentDatesColumn,
-                isPaidColumn, additionalInfoColumn, paymentDateColumn, previousRentersColumn);
+                isPaidColumn, additionalInfoColumn, paymentDateColumn, previousRentersColumn, statusTableColumn);
         return table;
     }
 
@@ -172,10 +179,19 @@ public class CabinsTab extends Tab implements Loadable {
         types.setEditable(false);
         types.setPrefWidth(100);
 
+        final ComboBox<StockStatus> status = new ComboBox<>();
+        status.getItems().addAll(StockStatus.values());
+        status.setEditable(false);
+        status.setPrefWidth(100);
+        status.getSelectionModel().select(StockStatus.ANY);
+
         final Button selectPeriodTypes = new Button("Выбрать");
         selectPeriodTypes.setOnAction(event -> {
             cabinObservableList.clear();
-            cabinObservableList.addAll(loadFromDatabase(("CABINS" + types.getValue().replaceAll(" ", " _")).replaceAll(" ", "")));
+            cabinObservableList.addAll(loadFromDatabase(("CABINS" + types.getValue().replaceAll(" ", " _")).replaceAll(" ", ""))
+                    .stream()
+                    .filter(cabin -> status.getValue() == StockStatus.ANY || cabin.getStatus() == status.getValue())
+                    .collect(Collectors.toList()));
         });
 
         final TextField number = new TextField();
@@ -218,9 +234,8 @@ public class CabinsTab extends Tab implements Loadable {
 
         final Button toStock = new Button("На склад");
 
-
         HBox addRemoveBox = new HBox();
-        addRemoveBox.getChildren().addAll(types, selectPeriodTypes);
+        addRemoveBox.getChildren().addAll(types, status, selectPeriodTypes);
         hBox.getChildren().addAll(number, name, addButton, removeButton);
 
         HBox manipulationsBox = new HBox();
@@ -371,6 +386,7 @@ public class CabinsTab extends Tab implements Loadable {
                     .setPreviousRenters(strings)
                     .setSeries(set.getString(13))
                     .setID(set.getInt(14))
+                    .setStatus(set.getBoolean(15) ? StockStatus.IN_STOCK : StockStatus.NOT_IN_STOCK)
                     .createCabin();
         } catch (SQLException e) {
             e.printStackTrace();

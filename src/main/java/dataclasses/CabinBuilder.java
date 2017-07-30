@@ -1,5 +1,7 @@
 package dataclasses;
 
+import UI.StockStatus;
+
 import java.time.LocalDate;
 
 public class CabinBuilder {
@@ -17,6 +19,7 @@ public class CabinBuilder {
     private int currentPaymentDate = 0;
     private String[] previousRenters = new String[1];
     private String series;
+    private StockStatus status = StockStatus.IN_STOCK;
 
     {
         paymentDates[0] = "";
@@ -93,7 +96,12 @@ public class CabinBuilder {
         return this;
     }
 
+    public CabinBuilder setStatus(StockStatus status) {
+        this.status = status;
+        return this;
+    }
+
     public Cabin createCabin() {
-        return new Cabin(id, number, name, rentPrice, currentPaymentAmount, inventoryPrice, transferDate, renter, isPaid, paymentDates, additionalInfo, currentPaymentDate, previousRenters, series);
+        return new Cabin(id, number, name, rentPrice, currentPaymentAmount, inventoryPrice, transferDate, renter, isPaid, paymentDates, additionalInfo, currentPaymentDate, previousRenters, series, status);
     }
 }
