@@ -1,4 +1,4 @@
-package UI;
+package dataclasses;
 
 public enum StockStatus {
     IN_STOCK("На складе"), NOT_IN_STOCK("В аренде"), ANY("Все");

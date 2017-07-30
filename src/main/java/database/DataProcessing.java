@@ -1,10 +1,7 @@
 package database;
 
 import UI.CabinsTab;
-import dataclasses.Cabin;
-import dataclasses.CabinBuilder;
-import dataclasses.Payment;
-import dataclasses.Renter;
+import dataclasses.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.h2.tools.RunScript;
@@ -17,7 +14,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,21 +63,18 @@ public class DataProcessing {
 
     public static int insertPayment(Payment payment, String period) {
         try {
-            PreparedStatement preparedInsertStatement;
-
-            String insertStatement = "INSERT INTO PAYMENTS." + period + "(DATE, PAYMENT, TYPE, AMOUNT) VALUES(?,?,?,?)";
-
-            preparedInsertStatement = connection.prepareStatement(insertStatement, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = connection.prepareStatement("INSERT INTO PAYMENTS." + period + "(DATE, PAYMENT, TYPE, AMOUNT,PAYMENT_TYPE) VALUES(?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
 
             connection.setAutoCommit(false);
-            preparedInsertStatement.setDate(1, Date.valueOf(Utils.formatDateToyyyyMMdd(payment.getDate())));
-            preparedInsertStatement.setString(2, payment.getPayment());
-            preparedInsertStatement.setString(3, payment.getType());
-            preparedInsertStatement.setInt(4, payment.getSum());
-            logger.info("Inserting new value into database: " + preparedInsertStatement);
-            preparedInsertStatement.executeUpdate();
+            ps.setDate(1, Date.valueOf(Utils.formatDateToyyyyMMdd(payment.getDate())));
+            ps.setString(2, payment.getPayment());
+            ps.setString(3, payment.getType());
+            ps.setInt(4, payment.getSum());
+            ps.setBoolean(5, payment.getCashType() == CashType.CASH);
+            logger.info("Inserting new value into database: " + ps);
+            ps.executeUpdate();
 
-            ResultSet resultSet = preparedInsertStatement.getGeneratedKeys();
+            ResultSet resultSet = ps.getGeneratedKeys();
             int key = 0;
             while (resultSet.next()) {
                 key = resultSet.getInt(1);
@@ -161,9 +154,9 @@ public class DataProcessing {
         }
     }
 
-    public static void updateCabinStatus(String table, Cabin cabin) {
+    public static void updateCabinPaymentStatus(Cabin cabin) {
         try {
-            PreparedStatement ps = connection.prepareStatement("UPDATE CABINS." + table + " SET IS_PAID = ?, PAYMENT_DATES = ?, CURRENT_PAYMENT_DATE = ? WHERE ID = ?");
+            PreparedStatement ps = connection.prepareStatement("UPDATE CABINS.CABINS SET IS_PAID = ?, PAYMENT_DATES = ?, CURRENT_PAYMENT_DATE = ? WHERE ID = ?");
             ps.setBoolean(1, cabin.isIsPaid());
             ps.setArray(2, connection.createArrayOf("VARCHAR", cabin.getPaymentDates().stream().map(Utils::formatDateToyyyyMMdd).toArray()));
             ps.setInt(3, cabin.getCurrentPaymentDate());
@@ -175,6 +168,19 @@ public class DataProcessing {
             e.printStackTrace();
         }
 
+    }
+
+    public static void updateCabinStockStatus(Cabin cabin, Boolean toStock) {
+        if (toStock) {
+            try {
+                PreparedStatement ps = connection.prepareStatement("UPDATE CABINS.CABINS  SET CURRTEN_PAYMENT_AMOUNT = '0', TRANSFER_DATE = NULL, RENTER = ''," +
+                        " IS_PAID = 'FALSE', PAYMENT_DATES = NULL , CURRENT_PAYMENT_DATE = '0', PREVIOUS_RENTERS = ?, STATUS = 'TRUE'");
+                ps.setArray(1,connection.createArrayOf("VARCHAR",cabin.getPreviousRenters().toArray()));
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static ResultSet getCabins(String series) {

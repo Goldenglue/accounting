@@ -8,6 +8,7 @@ public class PaymentBuilder {
     private String type;
     private int sum;
     private int id = 0;
+    private CashType cashType;
 
     public PaymentBuilder setDate(LocalDate date) {
         this.date = date;
@@ -34,7 +35,12 @@ public class PaymentBuilder {
         return this;
     }
 
+    public PaymentBuilder setCashType(CashType cashType) {
+        this.cashType = cashType;
+        return this;
+    }
+
     public Payment createPayment() {
-        return new Payment(date, payment, type, sum, id);
+        return new Payment(date, payment, type, sum, id, cashType);
     }
 }

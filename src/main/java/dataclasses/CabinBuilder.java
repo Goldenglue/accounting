@@ -1,7 +1,5 @@
 package dataclasses;
 
-import UI.StockStatus;
-
 import java.time.LocalDate;
 
 public class CabinBuilder {

@@ -1,11 +1,10 @@
 package dataclasses;
 
-import UI.StockStatus;
+import database.DataProcessing;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
-import jdk.nashorn.internal.runtime.StoredScript;
 import utils.Utils;
 
 import java.time.LocalDate;
@@ -59,6 +58,19 @@ public class Cabin {
         setIsPaid(true);
         getPaymentDates().add(date);
         setCurrentPaymentDate(date.getDayOfMonth());
+    }
+
+    public void toStock() {
+        DataProcessing.updateCabinStockStatus(this, true);
+        setCurrentPaymentAmount(0);
+        setTransferDate(null);
+        setIsPaid(false);
+        setPaymentDates(null);
+        setCurrentPaymentDate(0);
+        getPreviousRenters().add(getRenter());
+        setRenter("");
+        setStatus(StockStatus.IN_STOCK);
+
     }
 
     public int getNumber() {

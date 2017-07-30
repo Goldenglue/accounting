@@ -4,6 +4,7 @@ import database.DataProcessing;
 import dataclasses.Cabin;
 import dataclasses.Payment;
 import dataclasses.PaymentBuilder;
+import dataclasses.CashType;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -33,6 +34,7 @@ public class AllPaymentsTab extends PaymentTab {
     private TableColumn<Payment, LocalDate> dateColumn;
     private TableColumn<Payment, String> paymentColumn;
     private TableColumn<Payment, String> unitColumn;
+    private TableColumn<Payment, String> cashTypeColumn;
     private TableColumn<Payment, Integer> sumColumn;
     private ComboBox<String> periodComboBox;
     private DatePicker datePicker;
@@ -87,8 +89,8 @@ public class AllPaymentsTab extends PaymentTab {
         });
 
         unitColumn = new TableColumn<>("Тип");
-        unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
-        unitColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        unitColumn.setCellValueFactory(new PropertyValueFactory<>("type"));
+        unitColumn.setPrefWidth(90);
         unitColumn.setOnEditCommit(t -> {
             t.getTableView().getItems()
                     .get(t.getTablePosition().getRow())
@@ -96,7 +98,10 @@ public class AllPaymentsTab extends PaymentTab {
             DataProcessing.updatePayment(t.getTableView().getItems().get(t.getTablePosition().getRow()), periodComboBox.getValue());
         });
 
-        unitColumn.setPrefWidth(90);
+        cashTypeColumn = new TableColumn<>("Вид расчета");
+        cashTypeColumn.setCellValueFactory(new PropertyValueFactory<>("cashType"));
+        cashTypeColumn.setPrefWidth(150);
+        cashTypeColumn.setEditable(false);
 
         sumColumn = new TableColumn<>("Сумма");
         sumColumn.setCellValueFactory(new PropertyValueFactory<>("sum"));
@@ -110,7 +115,7 @@ public class AllPaymentsTab extends PaymentTab {
         sumColumn.setPrefWidth(60);
 
         table.setItems(paymentObservableList);
-        table.getColumns().addAll(dateColumn, paymentColumn, unitColumn, sumColumn);
+        table.getColumns().addAll(dateColumn, paymentColumn, unitColumn, cashTypeColumn, sumColumn);
         return table;
     }
 
@@ -164,8 +169,14 @@ public class AllPaymentsTab extends PaymentTab {
                 "Механизм"
         );
         typeComboBox.setEditable(false);
-        typeComboBox.setValue("Аренда");
+        typeComboBox.getSelectionModel().select("Аренда");
         typeComboBox.setMaxWidth(unitColumn.getPrefWidth());
+
+        final ComboBox<CashType> cashType = new ComboBox<>();
+        cashType.getItems().addAll(CashType.values());
+        cashType.getSelectionModel().selectFirst();
+        cashType.setPrefWidth(cashTypeColumn.getPrefWidth());
+        cashType.setEditable(false);
 
         final TextField addSum = new TextField();
         addSum.setPrefWidth(sumColumn.getPrefWidth());
@@ -180,9 +191,11 @@ public class AllPaymentsTab extends PaymentTab {
                     .setDate(datePicker.getValue())
                     .setPayment(addPayment.getText())
                     .setType(typeComboBox.getValue())
+                    .setCashType(cashType.getValue())
                     .setSum(Integer.parseInt(addSum.getText()))
                     .createPayment();
             payment.setID(DataProcessing.insertPayment(payment, periodComboBox.getValue()));
+            System.out.println(payment.toString());
             paymentObservableList.add(payment);
             addPayment.clear();
             addSum.clear();
@@ -204,7 +217,7 @@ public class AllPaymentsTab extends PaymentTab {
                     });
         });
 
-        hBox.getChildren().addAll(datePicker, addPayment, typeComboBox, addSum, addButton, removeButton);
+        hBox.getChildren().addAll(datePicker, addPayment, typeComboBox, cashType, addSum, addButton, removeButton);
 
         vBox.setSpacing(5);
         vBox.setPadding(new Insets(10, 0, 0, 10));
@@ -252,7 +265,7 @@ public class AllPaymentsTab extends PaymentTab {
                 if (!cabin.isIsPaid()) {
                     alreadyPaidString.setValue(String.valueOf(Integer.parseInt(alreadyPaidString.getValue()) + cabin.getRentPrice()));
                     cabin.payForCabin(datePicker.getValue());
-                    DataProcessing.updateCabinStatus(cabin.getSeries(), cabin);
+                    DataProcessing.updateCabinPaymentStatus(cabin);
                 }
             });
 

@@ -1,10 +1,7 @@
 package UI;
 
 import database.DataProcessing;
-import dataclasses.Cabin;
-import dataclasses.CabinBuilder;
-import dataclasses.Loadable;
-import dataclasses.Payment;
+import dataclasses.*;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -19,7 +16,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 import javafx.util.converter.IntegerStringConverter;
-import jdk.nashorn.internal.runtime.StoredScript;
 import utils.Utils;
 
 import java.sql.ResultSet;
@@ -29,7 +25,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -233,6 +228,9 @@ public class CabinsTab extends Tab implements Loadable {
         showInfo.setOnAction(event -> System.out.println(showInfo(table.getSelectionModel().getSelectedItem()).getKey()));
 
         final Button toStock = new Button("На склад");
+        toStock.setOnAction(event -> {
+            table.getSelectionModel().getSelectedItem().toStock();
+        });
 
         HBox addRemoveBox = new HBox();
         addRemoveBox.getChildren().addAll(types, status, selectPeriodTypes);

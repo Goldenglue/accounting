@@ -7,18 +7,20 @@ import javafx.beans.property.SimpleStringProperty;
 import java.time.LocalDate;
 
 public class Payment {
-    private final SimpleObjectProperty<LocalDate> date;
-    private final SimpleStringProperty payment;
-    private final SimpleStringProperty type;
-    private final SimpleIntegerProperty sum;
+    private SimpleObjectProperty<LocalDate> date;
+    private SimpleStringProperty payment;
+    private SimpleStringProperty type;
+    private SimpleIntegerProperty sum;
     private SimpleIntegerProperty ID;
+    private SimpleObjectProperty<CashType> cashType;
 
-    Payment(LocalDate date, String payment, String type, int sum, int ID) {
+    Payment(LocalDate date, String payment, String type, int sum, int ID, CashType cashType) {
         this.date = new SimpleObjectProperty<>(date);
         this.payment = new SimpleStringProperty(payment);
         this.type = new SimpleStringProperty(type);
         this.sum = new SimpleIntegerProperty(sum);
         this.ID = new SimpleIntegerProperty(ID);
+        this.cashType = new SimpleObjectProperty<>(cashType);
     }
 
     public int getID() {
@@ -65,7 +67,7 @@ public class Payment {
         this.type.set(unit);
     }
 
-    public SimpleStringProperty unitProperty() {
+    public SimpleStringProperty typeProperty() {
         return type;
     }
 
@@ -81,4 +83,27 @@ public class Payment {
         return sum;
     }
 
+    public CashType getCashType() {
+        return cashType.get();
+    }
+
+    public SimpleObjectProperty<CashType> cashTypeProperty() {
+        return cashType;
+    }
+
+    public void setCashType(CashType cashType) {
+        this.cashType.set(cashType);
+    }
+
+    @Override
+    public String toString() {
+        return "Payment{" +
+                "date=" + date +
+                ", payment=" + payment +
+                ", type=" + type +
+                ", sum=" + sum +
+                ", ID=" + ID +
+                ", cashType=" + cashType +
+                '}';
+    }
 }
