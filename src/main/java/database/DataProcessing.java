@@ -68,7 +68,7 @@ public class DataProcessing {
             connection.setAutoCommit(false);
             ps.setDate(1, Date.valueOf(Utils.formatDateToyyyyMMdd(payment.getDate())));
             ps.setString(2, payment.getPayment());
-            ps.setString(3, payment.getType());
+            ps.setBoolean(3, payment.getType() == PaymentType.RENT);
             ps.setInt(4, payment.getSum());
             ps.setBoolean(5, payment.getCashType() == CashType.CASH);
             logger.info("Inserting new value into database: " + ps);
@@ -89,17 +89,16 @@ public class DataProcessing {
     }
 
     public static void updatePayment(Payment payment, String period) {
-        PreparedStatement preparedUpdateStatement;
-
         try {
-            preparedUpdateStatement = connection.prepareStatement("UPDATE PAYMENTS." + period + " SET DATE = ? , PAYMENT = ?, TYPE = ?, AMOUNT = ? WHERE ID = ?");
-            preparedUpdateStatement.setDate(1, Date.valueOf(payment.getDate()));
-            preparedUpdateStatement.setString(2, payment.getPayment());
-            preparedUpdateStatement.setString(3, payment.getType());
-            preparedUpdateStatement.setInt(4, payment.getSum());
-            preparedUpdateStatement.setInt(5, payment.getID());
-            logger.info("Updating value in database with " + preparedUpdateStatement);
-            preparedUpdateStatement.executeUpdate();
+            PreparedStatement ps = connection.prepareStatement("UPDATE PAYMENTS." + period + " SET DATE = ? , PAYMENT = ?, TYPE = ?, AMOUNT = ?, PAYMENT_TYPE = ? WHERE ID = ?");
+            ps.setDate(1, Date.valueOf(payment.getDate()));
+            ps.setString(2, payment.getPayment());
+            ps.setBoolean(3, payment.getType() == PaymentType.RENT);
+            ps.setInt(4, payment.getSum());
+            ps.setBoolean(5,payment.getCashType() == CashType.CASH);
+            ps.setInt(6, payment.getID());
+            logger.info("Updating value in database with " + ps);
+            logger.info(ps.executeUpdate());
         } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -9,15 +9,15 @@ import java.time.LocalDate;
 public class Payment {
     private SimpleObjectProperty<LocalDate> date;
     private SimpleStringProperty payment;
-    private SimpleStringProperty type;
+    private SimpleObjectProperty<PaymentType> type;
     private SimpleIntegerProperty sum;
     private SimpleIntegerProperty ID;
     private SimpleObjectProperty<CashType> cashType;
 
-    Payment(LocalDate date, String payment, String type, int sum, int ID, CashType cashType) {
+    Payment(LocalDate date, String payment, PaymentType type, int sum, int ID, CashType cashType) {
         this.date = new SimpleObjectProperty<>(date);
         this.payment = new SimpleStringProperty(payment);
-        this.type = new SimpleStringProperty(type);
+        this.type = new SimpleObjectProperty<>(type);
         this.sum = new SimpleIntegerProperty(sum);
         this.ID = new SimpleIntegerProperty(ID);
         this.cashType = new SimpleObjectProperty<>(cashType);
@@ -59,15 +59,15 @@ public class Payment {
         return payment;
     }
 
-    public String getType() {
+    public PaymentType getType() {
         return type.get();
     }
 
-    public void setType(String unit) {
+    public void setType(PaymentType unit) {
         this.type.set(unit);
     }
 
-    public SimpleStringProperty typeProperty() {
+    public SimpleObjectProperty<PaymentType> typeProperty() {
         return type;
     }
 

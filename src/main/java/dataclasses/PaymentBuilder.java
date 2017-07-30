@@ -5,7 +5,7 @@ import java.time.LocalDate;
 public class PaymentBuilder {
     private LocalDate date;
     private String payment;
-    private String type;
+    private PaymentType type;
     private int sum;
     private int id = 0;
     private CashType cashType;
@@ -20,7 +20,7 @@ public class PaymentBuilder {
         return this;
     }
 
-    public PaymentBuilder setType(String type) {
+    public PaymentBuilder setType(PaymentType type) {
         this.type = type;
         return this;
     }

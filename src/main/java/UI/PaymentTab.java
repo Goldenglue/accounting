@@ -1,10 +1,7 @@
 package UI;
 
 import database.DataProcessing;
-import dataclasses.Loadable;
-import dataclasses.Payment;
-import dataclasses.PaymentBuilder;
-import dataclasses.CashType;
+import dataclasses.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Tab;
@@ -32,7 +29,7 @@ abstract class PaymentTab extends Tab implements Loadable {
                 payments.add(new PaymentBuilder()
                         .setDate(resultSet.getDate(2).toLocalDate())
                         .setPayment(resultSet.getString(3))
-                        .setType(resultSet.getString(4))
+                        .setType(resultSet.getBoolean(4) ? PaymentType.RENT : PaymentType.TRANSPORTING)
                         .setSum(resultSet.getInt(5))
                         .setID(resultSet.getInt(1))
                         .setCashType(resultSet.getBoolean(6) ? CashType.CASH : CashType.CASHLESS)

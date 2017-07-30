@@ -1,6 +1,7 @@
 package UI;
 
 import dataclasses.Payment;
+import dataclasses.PaymentType;
 import javafx.geometry.Insets;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -20,7 +21,7 @@ public class MechanismsPaymentTab extends PaymentTab {
         vBox.setPadding(new Insets(10, 0, 0, 10));
         vBox.getChildren().addAll(table);
         this.setContent(vBox);
-        this.setText("Платежи за механизмы");
+        this.setText("Платежи за транспорт");
         this.setClosable(false);
     }
 
@@ -54,7 +55,7 @@ public class MechanismsPaymentTab extends PaymentTab {
         sumColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         sumColumn.setPrefWidth(60);
 
-        table.setItems(paymentObservableList.filtered(item -> item.getType().equals("Механизм")));
+        table.setItems(paymentObservableList.filtered(item -> item.getType() == PaymentType.TRANSPORTING));
         table.getColumns().addAll(dateColumn, numberColumn, paymentColumn, unitColumn, sumColumn);
         return table;
     }

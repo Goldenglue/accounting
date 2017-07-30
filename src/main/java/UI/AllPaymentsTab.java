@@ -1,17 +1,16 @@
 package UI;
 
 import database.DataProcessing;
-import dataclasses.Cabin;
-import dataclasses.Payment;
-import dataclasses.PaymentBuilder;
-import dataclasses.CashType;
+import dataclasses.*;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Side;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.GridPane;
@@ -33,8 +32,8 @@ public class AllPaymentsTab extends PaymentTab {
     private final VBox vBox = new VBox();
     private TableColumn<Payment, LocalDate> dateColumn;
     private TableColumn<Payment, String> paymentColumn;
-    private TableColumn<Payment, String> unitColumn;
-    private TableColumn<Payment, String> cashTypeColumn;
+    private TableColumn<Payment, PaymentType> unitColumn;
+    private TableColumn<Payment, CashType> cashTypeColumn;
     private TableColumn<Payment, Integer> sumColumn;
     private ComboBox<String> periodComboBox;
     private DatePicker datePicker;
@@ -90,18 +89,24 @@ public class AllPaymentsTab extends PaymentTab {
 
         unitColumn = new TableColumn<>("Тип");
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("type"));
+        unitColumn.setCellFactory(ComboBoxTableCell.forTableColumn(FXCollections.observableArrayList(PaymentType.values())));
         unitColumn.setPrefWidth(90);
+        unitColumn.setEditable(true);
         unitColumn.setOnEditCommit(t -> {
-            t.getTableView().getItems()
-                    .get(t.getTablePosition().getRow())
-                    .setType(t.getNewValue());
-            DataProcessing.updatePayment(t.getTableView().getItems().get(t.getTablePosition().getRow()), periodComboBox.getValue());
+            t.getTableView().getSelectionModel().getSelectedItem().setType(t.getNewValue());
+            DataProcessing.updatePayment(t.getTableView().getSelectionModel().getSelectedItem(), periodComboBox.getValue());
         });
 
         cashTypeColumn = new TableColumn<>("Вид расчета");
         cashTypeColumn.setCellValueFactory(new PropertyValueFactory<>("cashType"));
+        cashTypeColumn.setCellFactory(ComboBoxTableCell.forTableColumn(FXCollections.observableArrayList(CashType.values())));
         cashTypeColumn.setPrefWidth(150);
-        cashTypeColumn.setEditable(false);
+        cashTypeColumn.setEditable(true);
+        cashTypeColumn.setOnEditCommit(t -> {
+            t.getTableView().getSelectionModel().getSelectedItem().setCashType(t.getNewValue());
+            DataProcessing.updatePayment(t.getTableView().getSelectionModel().getSelectedItem(), periodComboBox.getValue());
+        });
+
 
         sumColumn = new TableColumn<>("Сумма");
         sumColumn.setCellValueFactory(new PropertyValueFactory<>("sum"));
@@ -163,13 +168,10 @@ public class AllPaymentsTab extends PaymentTab {
             infoMenu.show(addPayment, Side.BOTTOM, 0, 0);
         });
 
-        final ComboBox<String> typeComboBox = new ComboBox<>();
-        typeComboBox.getItems().addAll(
-                "Аренда",
-                "Механизм"
-        );
+        final ComboBox<PaymentType> typeComboBox = new ComboBox<>();
+        typeComboBox.getItems().addAll(PaymentType.values());
         typeComboBox.setEditable(false);
-        typeComboBox.getSelectionModel().select("Аренда");
+        typeComboBox.getSelectionModel().selectFirst();
         typeComboBox.setMaxWidth(unitColumn.getPrefWidth());
 
         final ComboBox<CashType> cashType = new ComboBox<>();

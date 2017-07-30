@@ -1,6 +1,7 @@
 package UI;
 
 import dataclasses.Payment;
+import dataclasses.PaymentType;
 import javafx.geometry.Insets;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -54,7 +55,7 @@ public class RentPaymentsTab extends PaymentTab {
         sumColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         sumColumn.setPrefWidth(60);
 
-        table.setItems(paymentObservableList.filtered(item -> item.getType().equals("Аренда")));
+        table.setItems(paymentObservableList.filtered(item -> item.getType() == PaymentType.RENT));
         table.getColumns().addAll(dateColumn, numberColumn, paymentColumn, unitColumn, sumColumn);
         return table;
     }
