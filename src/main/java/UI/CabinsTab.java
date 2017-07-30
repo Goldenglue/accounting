@@ -3,6 +3,7 @@ package UI;
 import database.DataProcessing;
 import dataclasses.Cabin;
 import dataclasses.CabinBuilder;
+import dataclasses.Loadable;
 import dataclasses.Payment;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -32,7 +33,7 @@ import java.util.stream.Collectors;
 /**
  * Created by IvanOP on 13.07.2017.
  */
-public class CabinsTab extends Tab {
+public class CabinsTab extends Tab implements Loadable {
     private final HBox hBox = new HBox();
     private final VBox vBox = new VBox();
     public static ObservableList<Cabin> cabinObservableList = FXCollections.observableArrayList();
@@ -47,13 +48,6 @@ public class CabinsTab extends Tab {
     private TableColumn<Cabin, Boolean> isPaidColumn;
     private TableColumn<Cabin, Integer> paymentDateColumn;
     private TableColumn<Cabin, String> additionalInfoColumn;
-    private final Button toStock = new Button("На склад");
-
-    {
-        toStock.setOnAction(event -> {
-
-        });
-    }
 
     CabinsTab() {
         table = setTableUp();
@@ -181,7 +175,7 @@ public class CabinsTab extends Tab {
         final Button selectPeriodTypes = new Button("Выбрать");
         selectPeriodTypes.setOnAction(event -> {
             cabinObservableList.clear();
-            cabinObservableList.addAll(loadCabinsFromDatabase(("CABINS" + types.getValue().replaceAll(" ", " _")).replaceAll(" ", "")));
+            cabinObservableList.addAll(loadFromDatabase(("CABINS" + types.getValue().replaceAll(" ", " _")).replaceAll(" ", "")));
         });
 
         final TextField number = new TextField();
@@ -197,7 +191,7 @@ public class CabinsTab extends Tab {
                     .setName(name.getText())
                     .setSeries(types.getValue())
                     .createCabin();
-            cabin.setID(DataProcessing.insertCabinIntoDatabase(cabin));
+            cabin.setID(DataProcessing.insertCabin(cabin));
             cabinObservableList.add(cabin);
             number.clear();
             name.clear();
@@ -214,13 +208,15 @@ public class CabinsTab extends Tab {
                     .filter(response -> response == ButtonType.OK)
                     .ifPresent(response -> {
                         Cabin cabin = table.getSelectionModel().getSelectedItem();
-                        DataProcessing.deleteCabinFromDatabase(cabin);
+                        DataProcessing.deleteCabin(cabin);
                         table.getItems().remove(cabin);
                     });
         });
 
         final Button showInfo = new Button("Подробная информация");
         showInfo.setOnAction(event -> System.out.println(showInfo(table.getSelectionModel().getSelectedItem()).getKey()));
+
+        final Button toStock = new Button("На склад");
 
 
         HBox addRemoveBox = new HBox();
@@ -314,6 +310,7 @@ public class CabinsTab extends Tab {
         grid.add(new Label("Предыдущие арендаторы"), 0, ++rowIndex);
         grid.add(previousRenters, 1, rowIndex);
 
+        final Button toStock = new Button("На склад");
         grid.add(toStock, 0, ++rowIndex);
 
 
@@ -343,41 +340,51 @@ public class CabinsTab extends Tab {
         return dialog.showAndWait().get();
     }
 
-    public static List<Cabin> loadCabinsFromDatabase(String series) {
-        ResultSet set = DataProcessing.getCabinsFromDatabase(series);
+    public static Cabin constructCabin(ResultSet set) {
+        try {
+            Object[] objects = (Object[]) set.getArray(9).getArray();
+            String[] dates = new String[objects.length];
+            for (int i = 0; i < objects.length; i++) {
+                if (objects[i] != null && objects[i] != "0") {
+                    dates[i] = (String) objects[i];
+                } else {
+                    dates[i] = "0";
+                }
+            }
+            Object[] renters = (Object[]) set.getArray(12).getArray();
+            String[] strings = new String[renters.length];
+            for (int i = 0; i < renters.length; i++) {
+                strings[i] = renters[i].toString();
+            }
+            return new CabinBuilder()
+                    .setNumber(set.getInt(1))
+                    .setName(set.getString(2))
+                    .setRentPrice(set.getInt(3))
+                    .setCurrentPaymentAmount(set.getInt(4))
+                    .setInventoryPrice(set.getInt(5))
+                    .setTransferDate(set.getDate(6) != null ? set.getDate(6).toLocalDate() : null)
+                    .setRenter(set.getString(7))
+                    .setIsPaid(set.getBoolean(8))
+                    .setPaymentDates(dates)
+                    .setAdditionalInfo(set.getString(10))
+                    .setCurrentPaymentDate(set.getInt(11))
+                    .setPreviousRenters(strings)
+                    .setSeries(set.getString(13))
+                    .setID(set.getInt(14))
+                    .createCabin();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public List<Cabin> loadFromDatabase(String series) {
+        ResultSet set = DataProcessing.getCabins(series);
         List<Cabin> cabins = new ArrayList<>();
         try {
             while (set.next()) {
-                Object[] objects = (Object[]) set.getArray(9).getArray();
-                String[] dates = new String[objects.length];
-                for (int i = 0; i < objects.length; i++) {
-                    if (objects[i] != null && objects[i] != "0") {
-                        dates[i] = (String) objects[i];
-                    } else {
-                        dates[i] = "0";
-                    }
-                }
-                Object[] renters = (Object[]) set.getArray(12).getArray();
-                String[] strings = new String[renters.length];
-                for (int i = 0; i < renters.length; i++) {
-                    strings[i] = renters[i].toString();
-                }
-                cabins.add(new CabinBuilder()
-                        .setNumber(set.getInt(1))
-                        .setName(set.getString(2))
-                        .setRentPrice(set.getInt(3))
-                        .setCurrentPaymentAmount(set.getInt(4))
-                        .setInventoryPrice(set.getInt(5))
-                        .setTransferDate(set.getDate(6) != null ? set.getDate(6).toLocalDate() : null)
-                        .setRenter(set.getString(7))
-                        .setIsPaid(set.getBoolean(8))
-                        .setPaymentDates(dates)
-                        .setAdditionalInfo(set.getString(10))
-                        .setCurrentPaymentDate(set.getInt(11))
-                        .setPreviousRenters(strings)
-                        .setSeries(set.getString(13))
-                        .setID(set.getInt(14))
-                        .createCabin());
+                cabins.add(constructCabin(set));
             }
             cabins.sort(Comparator.comparingInt(Cabin::getNumber));
         } catch (SQLException e) {

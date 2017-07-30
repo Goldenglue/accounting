@@ -115,11 +115,6 @@ public class AllPaymentsTab extends PaymentTab {
     }
 
     @Override
-    protected void loadFromDatabase(String period) {
-        super.loadFromDatabase(period);
-    }
-
-    @Override
     protected void createGUI() {
         periodComboBox = new ComboBox<>();
         periodComboBox.getItems().addAll(DataProcessing.getAvailableTableNames("PAYMENTS"));
@@ -128,12 +123,12 @@ public class AllPaymentsTab extends PaymentTab {
         periodComboBox.setPrefWidth(100);
 
         paymentObservableList.clear();
-        loadFromDatabase(periodComboBox.getValue());
+        paymentObservableList.addAll(loadFromDatabase(periodComboBox.getValue()));
 
         final Button choosePeriod = new Button("Выбрать месяц");
         choosePeriod.setOnAction(action -> {
             paymentObservableList.clear();
-            loadFromDatabase(periodComboBox.getValue());
+            paymentObservableList.addAll(loadFromDatabase(periodComboBox.getValue()));
         });
 
         HBox selectionBox = new HBox();
@@ -187,7 +182,7 @@ public class AllPaymentsTab extends PaymentTab {
                     .setType(typeComboBox.getValue())
                     .setSum(Integer.parseInt(addSum.getText()))
                     .createPayment();
-            payment.setID(DataProcessing.insertPaymentIntoDatabase(payment, periodComboBox.getValue()));
+            payment.setID(DataProcessing.insertPayment(payment, periodComboBox.getValue()));
             paymentObservableList.add(payment);
             addPayment.clear();
             addSum.clear();
@@ -204,7 +199,7 @@ public class AllPaymentsTab extends PaymentTab {
                     .filter(response -> response == ButtonType.OK)
                     .ifPresent(response -> {
                         Payment payment = table.getSelectionModel().getSelectedItem();
-                        DataProcessing.deletePaymentFromDatabase(payment, periodComboBox.getValue());
+                        DataProcessing.deletePayment(payment, periodComboBox.getValue());
                         table.getItems().remove(payment);
                     });
         });
@@ -219,7 +214,7 @@ public class AllPaymentsTab extends PaymentTab {
 
     private void createPaymentDialog(String renter, Integer sum) {
         List<Integer> cabinsNumbers = new ArrayList<>();
-        cabinsNumbers.addAll(Arrays.asList(DataProcessing.getRentedCabins(renter)));
+        cabinsNumbers.addAll(Arrays.asList(DataProcessing.getRentedCabinsByRenter(renter)));
 
         Dialog<Pair<String, String>> dialog = new Dialog<>();
         dialog.setTitle("Платеж");

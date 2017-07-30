@@ -1,6 +1,7 @@
 package UI;
 
 import database.DataProcessing;
+import dataclasses.Loadable;
 import dataclasses.Renter;
 import dataclasses.RenterBuilder;
 import javafx.beans.property.SimpleObjectProperty;
@@ -20,7 +21,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RenterTab extends Tab {
+public class RenterTab extends Tab implements Loadable {
     private ObservableList<Renter> renters = FXCollections.observableArrayList();
     private VBox vBox = new VBox();
     private TableView<Renter> renterTable;
@@ -37,7 +38,7 @@ public class RenterTab extends Tab {
         setContent(vBox);
         setText("Арендаторы");
         setClosable(false);
-        renters.addAll(loadRentersFromDatabase());
+        renters.addAll(loadFromDatabase("RENTERS_INFO"));
     }
 
     private TableView<Renter> setTableUp() {
@@ -45,7 +46,7 @@ public class RenterTab extends Tab {
         renterTable = new TableView<>();
         renterTable.setEditable(true);
 
-        renterTableColumn = new TableColumn<>("Информация об арендаторе");
+        renterTableColumn = new TableColumn<>("Арендатор");
         renterTableColumn.setCellValueFactory(new PropertyValueFactory<>("renter"));
         renterTableColumn.setPrefWidth(500);
 
@@ -198,7 +199,8 @@ public class RenterTab extends Tab {
         return dialog.showAndWait().get();
     }
 
-    private static List<Renter> loadRentersFromDatabase() {
+    @Override
+    public List<Renter> loadFromDatabase(String s) {
         ResultSet set = DataProcessing.getDataFromTable("RENTERS_INFO", "RENTERS");
         List<Renter> renters = new ArrayList<>();
         try {

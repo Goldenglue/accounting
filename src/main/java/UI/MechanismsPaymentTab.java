@@ -25,7 +25,7 @@ public class MechanismsPaymentTab extends PaymentTab {
     }
 
     @Override
-    protected TableView setTableUp() {
+    protected TableView<Payment> setTableUp() {
         TableView<Payment> table = new TableView<>();
         table.setEditable(false);
 
