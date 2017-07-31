@@ -16,14 +16,17 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.util.Pair;
 import javafx.util.converter.IntegerStringConverter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -37,6 +40,7 @@ public class AllPaymentsTab extends PaymentTab {
     private TableColumn<Payment, Integer> sumColumn;
     private ComboBox<String> periodComboBox;
     private DatePicker datePicker;
+    private static Logger logger = LogManager.getLogger();
 
     AllPaymentsTab() {
         table = setTableUp();
@@ -55,13 +59,7 @@ public class AllPaymentsTab extends PaymentTab {
         dateColumn = new TableColumn<>("Дата");
         dateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
         dateColumn.setCellFactory(column -> new LocalDateCellFactory());
-        dateColumn.setOnEditCommit(editCommit -> {
-            editCommit.getTableView().getItems()
-                    .get(editCommit.getTablePosition().getRow())
-                    .setDate(editCommit.getNewValue());
-            DataProcessing.updatePayment(editCommit.getTableView().getItems().get(editCommit.getTablePosition().getRow()), periodComboBox.getValue());
-        });
-        dateColumn.setEditable(true);
+        dateColumn.setEditable(false);
         dateColumn.setPrefWidth(100);
 
         /*numberColumn.setCellFactory(column -> new TableCell<Payment, Integer>() {
@@ -80,44 +78,25 @@ public class AllPaymentsTab extends PaymentTab {
         paymentColumn.setCellValueFactory(new PropertyValueFactory<>("payment"));
         paymentColumn.setPrefWidth(400);
         paymentColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        paymentColumn.setOnEditCommit(t -> {
-            t.getTableView().getItems()
-                    .get(t.getTablePosition().getRow())
-                    .setPayment(t.getNewValue());
-            DataProcessing.updatePayment(t.getTableView().getItems().get(t.getTablePosition().getRow()), periodComboBox.getValue());
-        });
+        paymentColumn.setEditable(false);
 
         unitColumn = new TableColumn<>("Тип");
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("type"));
         unitColumn.setCellFactory(ComboBoxTableCell.forTableColumn(FXCollections.observableArrayList(PaymentType.values())));
         unitColumn.setPrefWidth(90);
-        unitColumn.setEditable(true);
-        unitColumn.setOnEditCommit(t -> {
-            t.getTableView().getSelectionModel().getSelectedItem().setType(t.getNewValue());
-            DataProcessing.updatePayment(t.getTableView().getSelectionModel().getSelectedItem(), periodComboBox.getValue());
-        });
+        unitColumn.setEditable(false);
 
         cashTypeColumn = new TableColumn<>("Вид расчета");
         cashTypeColumn.setCellValueFactory(new PropertyValueFactory<>("cashType"));
         cashTypeColumn.setCellFactory(ComboBoxTableCell.forTableColumn(FXCollections.observableArrayList(CashType.values())));
         cashTypeColumn.setPrefWidth(150);
-        cashTypeColumn.setEditable(true);
-        cashTypeColumn.setOnEditCommit(t -> {
-            t.getTableView().getSelectionModel().getSelectedItem().setCashType(t.getNewValue());
-            DataProcessing.updatePayment(t.getTableView().getSelectionModel().getSelectedItem(), periodComboBox.getValue());
-        });
-
+        cashTypeColumn.setEditable(false);
 
         sumColumn = new TableColumn<>("Сумма");
         sumColumn.setCellValueFactory(new PropertyValueFactory<>("sum"));
         sumColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        sumColumn.setOnEditCommit(t -> {
-            t.getTableView().getItems()
-                    .get(t.getTablePosition().getRow())
-                    .setSum(t.getNewValue());
-            DataProcessing.updatePayment(t.getTableView().getItems().get(t.getTablePosition().getRow()), periodComboBox.getValue());
-        });
         sumColumn.setPrefWidth(60);
+        sumColumn.setEditable(false);
 
         table.setItems(paymentObservableList);
         table.getColumns().addAll(dateColumn, paymentColumn, unitColumn, cashTypeColumn, sumColumn);
@@ -186,15 +165,18 @@ public class AllPaymentsTab extends PaymentTab {
 
         final Button addButton = new Button("Добавить");
         addButton.setOnAction(action -> {
-            if (typeComboBox.getValue().equals("Аренда")) {
-                createPaymentDialog(addPayment.getText(), Integer.parseInt(addSum.getText()));
+            ArrayList<Integer> paidCabinsNumbers = null;
+            if (typeComboBox.getValue() == PaymentType.RENT) {
+                paidCabinsNumbers = createPaymentDialog(addPayment.getText(), Integer.parseInt(addSum.getText()));
             }
+            logger.info("Affected cabins numbers: " + paidCabinsNumbers);
             Payment payment = new PaymentBuilder()
                     .setDate(datePicker.getValue())
                     .setPayment(addPayment.getText())
                     .setType(typeComboBox.getValue())
                     .setCashType(cashType.getValue())
                     .setSum(Integer.parseInt(addSum.getText()))
+                    .setCabinsNumbers(paidCabinsNumbers)
                     .createPayment();
             payment.setID(DataProcessing.insertPayment(payment, periodComboBox.getValue()));
             System.out.println(payment.toString());
@@ -204,19 +186,21 @@ public class AllPaymentsTab extends PaymentTab {
         });
         addButton.setDefaultButton(true);
 
-        final Button removeButton = new Button("Удалить");
+        final Button removeButton = new Button("Отменить");
         removeButton.setOnAction(action -> {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Удаление строки из таблицы");
+            alert.setTitle("Отмена платежа");
             alert.setHeaderText(null);
-            alert.setContentText("Вы действительно хотите удалить эту строку?" + "\n" + (table.getSelectionModel().getSelectedItem()).getPayment());
-            alert.showAndWait()
-                    .filter(response -> response == ButtonType.OK)
-                    .ifPresent(response -> {
-                        Payment payment = table.getSelectionModel().getSelectedItem();
-                        DataProcessing.deletePayment(payment, periodComboBox.getValue());
-                        table.getItems().remove(payment);
-                    });
+            if (table.getSelectionModel().getSelectedItem() != null) {
+                alert.setContentText("Вы действительно хотите отменить этот платеж?" + "\n" + (table.getSelectionModel().getSelectedItem()).getPayment());
+                alert.showAndWait()
+                        .filter(response -> response == ButtonType.OK)
+                        .ifPresent(response -> {
+                            Payment payment = table.getSelectionModel().getSelectedItem();
+                            DataProcessing.deletePayment(payment, periodComboBox.getValue());
+                            table.getItems().remove(payment);
+                        });
+            }
         });
 
         hBox.getChildren().addAll(datePicker, addPayment, typeComboBox, cashType, addSum, addButton, removeButton);
@@ -227,15 +211,14 @@ public class AllPaymentsTab extends PaymentTab {
 
     }
 
-    private void createPaymentDialog(String renter, Integer sum) {
+    private ArrayList<Integer> createPaymentDialog(String renter, Integer sum) {
         List<Integer> cabinsNumbers = new ArrayList<>();
         cabinsNumbers.addAll(Arrays.asList(DataProcessing.getRentedCabinsByRenter(renter)));
-
-        Dialog<Pair<String, String>> dialog = new Dialog<>();
+        Dialog<ArrayList<Integer>> dialog = new Dialog<>();
         dialog.setTitle("Платеж");
 
         ButtonType payType = new ButtonType("Оплатить", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(payType, ButtonType.CANCEL);
+        dialog.getDialogPane().getButtonTypes().addAll(payType);
 
         GridPane grid = new GridPane();
         ScrollPane pane = new ScrollPane();
@@ -244,29 +227,29 @@ public class AllPaymentsTab extends PaymentTab {
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
 
-        List<Cabin> cabins = cabinsNumbers.stream()
+        Map<Cabin, Boolean> cabins = cabinsNumbers
+                .stream()
                 .map(integer -> DataProcessing.getCabinByRenterAndNumber(renter, integer))
-                .collect(Collectors.toList());
+                .collect(Collectors.toMap(Function.identity(), value -> false));
 
-        ObservableValue<Integer> alreadyPaidAmount = new ReadOnlyObjectWrapper<>(cabins.stream()
-                .filter(Cabin::isIsPaid)
-                .mapToInt(Cabin::getRentPrice)
-                .sum());
+        ObservableValue<Integer> alreadyPaidAmount = new ReadOnlyObjectWrapper<>(cabins.keySet().stream().filter(Cabin::isIsPaid).mapToInt(Cabin::getRentPrice).sum());
 
         StringProperty alreadyPaidString = new SimpleStringProperty(String.valueOf(alreadyPaidAmount.getValue()));
         Label alreadyPaid = new Label(alreadyPaidString.toString());
         alreadyPaid.textProperty().bind(alreadyPaidString);
 
-        cabins.forEach(cabin -> {
-            int index = cabins.indexOf(cabin);
+        cabins.forEach((cabin, isPaid) -> {
+            int index = cabinsNumbers.indexOf(cabin.getNumber());
             Label amountToPay = new Label("К оплате за " + String.valueOf(cabin.getNumber()));
             Label text = new Label(String.valueOf(cabin.getRentPrice()));
 
             Button button = new Button("Оплатить " + String.valueOf(cabin.getNumber()));
             button.setOnAction(event -> {
                 if (!cabin.isIsPaid()) {
+                    cabins.replace(cabin, !isPaid);
                     alreadyPaidString.setValue(String.valueOf(Integer.parseInt(alreadyPaidString.getValue()) + cabin.getRentPrice()));
                     cabin.payForCabin(datePicker.getValue());
+                    cabins.replace(cabin, !isPaid);
                     DataProcessing.updateCabinPaymentStatus(cabin);
                 }
             });
@@ -277,15 +260,13 @@ public class AllPaymentsTab extends PaymentTab {
         });
 
 
-        Label totalToPay = new Label(String.valueOf(cabins.stream()
+        Label totalToPay = new Label(String.valueOf(cabins.keySet().stream()
                 .mapToInt(Cabin::getRentPrice)
                 .sum()));
-        Button payForAll = new Button("Оплатить все");
 
         int index = cabins.size();
         grid.add(new Label("Всего к оплате:"), 0, index);
         grid.add(totalToPay, 1, index);
-        grid.add(payForAll, 2, index);
         grid.add(new Label("Оплачено:"), 0, ++index);
         grid.add(alreadyPaid, 1, index);
 
@@ -293,11 +274,14 @@ public class AllPaymentsTab extends PaymentTab {
         pane.setContent(grid);
         pane.setPrefViewportHeight(500);
         dialog.getDialogPane().setContent(pane);
+        dialog.setResultConverter(value -> cabins
+                .entrySet()
+                .stream()
+                .filter(Map.Entry::getValue)
+                .map(cabin -> cabin.getKey().getNumber())
+                .collect(Collectors.toCollection(ArrayList::new)));
 
-        dialog.show();
-
-        Button pay = new Button("Оплатить");
-        Button cancel = new Button("Отмена");
+        return dialog.showAndWait().get();
     }
 
 

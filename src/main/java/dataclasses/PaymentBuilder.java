@@ -1,6 +1,7 @@
 package dataclasses;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 public class PaymentBuilder {
     private LocalDate date;
@@ -9,6 +10,7 @@ public class PaymentBuilder {
     private int sum;
     private int id = 0;
     private CashType cashType;
+    private ArrayList<Integer> cabinsNumbers = new ArrayList<>();
 
     public PaymentBuilder setDate(LocalDate date) {
         this.date = date;
@@ -40,7 +42,12 @@ public class PaymentBuilder {
         return this;
     }
 
+    public PaymentBuilder setCabinsNumbers(ArrayList<Integer> cabinsNumbers) {
+        this.cabinsNumbers = cabinsNumbers;
+        return this;
+    }
+
     public Payment createPayment() {
-        return new Payment(date, payment, type, sum, id, cashType);
+        return new Payment(date, payment, type, sum, id, cashType, cabinsNumbers);
     }
 }

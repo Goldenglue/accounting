@@ -63,7 +63,7 @@ public class DataProcessing {
 
     public static int insertPayment(Payment payment, String period) {
         try {
-            PreparedStatement ps = connection.prepareStatement("INSERT INTO PAYMENTS." + period + "(DATE, PAYMENT, TYPE, AMOUNT,PAYMENT_TYPE) VALUES(?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = connection.prepareStatement("INSERT INTO PAYMENTS." + period + "(DATE, PAYMENT, TYPE, AMOUNT,PAYMENT_TYPE,CABINS_NUMBERS) VALUES(?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
 
             connection.setAutoCommit(false);
             ps.setDate(1, Date.valueOf(Utils.formatDateToyyyyMMdd(payment.getDate())));
@@ -71,13 +71,14 @@ public class DataProcessing {
             ps.setBoolean(3, payment.getType() == PaymentType.RENT);
             ps.setInt(4, payment.getSum());
             ps.setBoolean(5, payment.getCashType() == CashType.CASH);
+            ps.setArray(6, connection.createArrayOf("INTEGER", payment.getCabinsNumbers().toArray()));
             logger.info("Inserting new value into database: " + ps);
             ps.executeUpdate();
 
-            ResultSet resultSet = ps.getGeneratedKeys();
+            ResultSet rs = ps.getGeneratedKeys();
             int key = 0;
-            while (resultSet.next()) {
-                key = resultSet.getInt(1);
+            while (rs.next()) {
+                key = rs.getInt(1);
             }
             connection.commit();
             connection.setAutoCommit(true);
@@ -88,35 +89,33 @@ public class DataProcessing {
         return 1;
     }
 
-    public static void updatePayment(Payment payment, String period) {
-        try {
-            PreparedStatement ps = connection.prepareStatement("UPDATE PAYMENTS." + period + " SET DATE = ? , PAYMENT = ?, TYPE = ?, AMOUNT = ?, PAYMENT_TYPE = ? WHERE ID = ?");
-            ps.setDate(1, Date.valueOf(payment.getDate()));
-            ps.setString(2, payment.getPayment());
-            ps.setBoolean(3, payment.getType() == PaymentType.RENT);
-            ps.setInt(4, payment.getSum());
-            ps.setBoolean(5,payment.getCashType() == CashType.CASH);
-            ps.setInt(6, payment.getID());
-            logger.info("Updating value in database with " + ps);
-            logger.info(ps.executeUpdate());
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static void deletePayment(Payment payment, String period) {
-        PreparedStatement preparedDeleteStatement;
-
-        String deleteStatement = "DELETE FROM PAYMENTS." + period + " WHERE ID = ?";
-        logger.info("Removing: " + deleteStatement);
-
         try {
-            preparedDeleteStatement = connection.prepareStatement(deleteStatement);
-            preparedDeleteStatement.setInt(1, payment.getID());
-            logger.info("Result of removing " + preparedDeleteStatement.executeUpdate());
+            PreparedStatement ps = connection.prepareStatement("DELETE FROM PAYMENTS." + period + " WHERE ID = ?");
+            ps.setInt(1, payment.getID());
+            logger.info("Removing: " + ps);
+            logger.info("Result of removing " + ps.executeUpdate());
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        logger.info(payment.getCabinsNumbers());
+        payment.getCabinsNumbers().forEach(integer -> {
+            Cabin cabin = getCabinByRenterAndNumber(payment.getPayment(), integer);
+            assert cabin != null;
+            cabin.getPaymentDates().remove(payment.getDate());
+            try {
+                PreparedStatement ps = connection.prepareStatement("UPDATE CABINS.CABINS SET IS_PAID = ?, PAYMENT_DATES = ?, CURRENT_PAYMENT_DATE = ? WHERE RENTER= ? AND NUMBER = ?");
+                ps.setBoolean(1, false);
+                ps.setArray(2, connection.createArrayOf("INTEGER", cabin.getPaymentDates().toArray()));
+                ps.setInt(3, 0);
+                ps.setString(4, payment.getPayment());
+                ps.setInt(5, integer);
+                logger.info("updating cabin status to unpaid: " + ps.executeUpdate());
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public static int insertCabin(Cabin cabin) {
@@ -135,7 +134,7 @@ public class DataProcessing {
             ps.setString(10, cabin.getAdditionalInfo());
             ps.setInt(11, cabin.getCurrentPaymentDate());
             ps.setArray(12, connection.createArrayOf("VARCHAR", cabin.getPreviousRenters().toArray()));
-            ps.setString(13, "CABINS_" + cabin.getSeries().trim().replaceAll(" ","_"));
+            ps.setString(13, "CABINS_" + cabin.getSeries().trim().replaceAll(" ", "_"));
             connection.setAutoCommit(false);
             logger.info("inserting " + cabin.toString());
             ps.executeUpdate();
@@ -174,7 +173,7 @@ public class DataProcessing {
             try {
                 PreparedStatement ps = connection.prepareStatement("UPDATE CABINS.CABINS  SET CURRTEN_PAYMENT_AMOUNT = '0', TRANSFER_DATE = NULL, RENTER = ''," +
                         " IS_PAID = 'FALSE', PAYMENT_DATES = NULL , CURRENT_PAYMENT_DATE = '0', PREVIOUS_RENTERS = ?, STATUS = 'TRUE'");
-                ps.setArray(1,connection.createArrayOf("VARCHAR",cabin.getPreviousRenters().toArray()));
+                ps.setArray(1, connection.createArrayOf("VARCHAR", cabin.getPreviousRenters().toArray()));
                 ps.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -201,7 +200,7 @@ public class DataProcessing {
             ResultSet set = ps.executeQuery();
             Cabin cabin = null;
             while (set.next()) {
-                 cabin =  CabinsTab.constructCabin(set);
+                cabin = CabinsTab.constructCabin(set);
             }
             return cabin;
         } catch (SQLException e) {
@@ -239,7 +238,7 @@ public class DataProcessing {
     public static void deleteCabin(Cabin cabin) {
         try {
             PreparedStatement ps = connection.prepareStatement("DELETE FROM CABINS.CABINS WHERE ID = ?");
-            ps.setInt(1,cabin.getID());
+            ps.setInt(1, cabin.getID());
             ps.executeUpdate();
             logger.info("deleted cabin: " + cabin.toString());
         } catch (SQLException e) {

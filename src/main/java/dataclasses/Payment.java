@@ -5,6 +5,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 public class Payment {
     private SimpleObjectProperty<LocalDate> date;
@@ -13,14 +14,16 @@ public class Payment {
     private SimpleIntegerProperty sum;
     private SimpleIntegerProperty ID;
     private SimpleObjectProperty<CashType> cashType;
+    private SimpleObjectProperty<ArrayList<Integer>> cabinsNumbers;
 
-    Payment(LocalDate date, String payment, PaymentType type, int sum, int ID, CashType cashType) {
+    Payment(LocalDate date, String payment, PaymentType type, int sum, int ID, CashType cashType, ArrayList<Integer> cabinsNumbers) {
         this.date = new SimpleObjectProperty<>(date);
         this.payment = new SimpleStringProperty(payment);
         this.type = new SimpleObjectProperty<>(type);
         this.sum = new SimpleIntegerProperty(sum);
         this.ID = new SimpleIntegerProperty(ID);
         this.cashType = new SimpleObjectProperty<>(cashType);
+        this.cabinsNumbers = new SimpleObjectProperty<>(cabinsNumbers);
     }
 
     public int getID() {
@@ -95,6 +98,18 @@ public class Payment {
         this.cashType.set(cashType);
     }
 
+    public ArrayList<Integer> getCabinsNumbers() {
+        return cabinsNumbers.get();
+    }
+
+    public SimpleObjectProperty<ArrayList<Integer>> cabinsNumbersProperty() {
+        return cabinsNumbers;
+    }
+
+    public void setCabinsNumbers(ArrayList<Integer> cabinsNumbers) {
+        this.cabinsNumbers.set(cabinsNumbers);
+    }
+
     @Override
     public String toString() {
         return "Payment{" +
@@ -104,6 +119,7 @@ public class Payment {
                 ", sum=" + sum +
                 ", ID=" + ID +
                 ", cashType=" + cashType +
+                ", cabinsNumbers=" + cabinsNumbers +
                 '}';
     }
 }

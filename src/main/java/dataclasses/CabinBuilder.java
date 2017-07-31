@@ -100,6 +100,7 @@ public class CabinBuilder {
     }
 
     public Cabin createCabin() {
-        return new Cabin(id, number, name, rentPrice, currentPaymentAmount, inventoryPrice, transferDate, renter, isPaid, paymentDates, additionalInfo, currentPaymentDate, previousRenters, series, status);
+        return new Cabin(id, number, name, rentPrice, currentPaymentAmount, inventoryPrice, transferDate, renter,
+                isPaid, paymentDates, additionalInfo, currentPaymentDate, previousRenters, series, status);
     }
 }
