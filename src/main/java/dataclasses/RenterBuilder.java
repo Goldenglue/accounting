@@ -3,7 +3,7 @@ package dataclasses;
 public class RenterBuilder {
     private String renter;
     private Integer[] rentedCabins;
-    private Integer debtAmount;
+    private Integer debtAmount = 0;
     private String phoneNumber;
     private String email;
     private String info;

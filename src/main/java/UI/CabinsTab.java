@@ -272,8 +272,8 @@ public class CabinsTab extends Tab implements Loadable {
         grid.add(new Label("Стоимость аренды:"), 0, ++rowIndex);
         grid.add(rentPrice, 1, rowIndex);
 
-        final TextField currentPaymentAmount = new TextField(String.valueOf(cabin.getCurrentPaymentAmount()));
-        grid.add(new Label("Сумма текущего платежа:"), 0, ++rowIndex);
+        final Label currentPaymentAmount = new Label(String.valueOf(cabin.getCurrentPaymentAmount()));
+        grid.add(new Label("Размер текущего платежа:"), 0, ++rowIndex);
         grid.add(currentPaymentAmount, 1, rowIndex);
 
         final TextField inventoryPrice = new TextField(String.valueOf(cabin.getInventoryPrice()));
@@ -335,21 +335,16 @@ public class CabinsTab extends Tab implements Loadable {
                 if (rentPrice.getText().matches("^[0-9]*$")) {
                     cabin.setRentPrice(Integer.parseInt(rentPrice.getText()));
                 }
-                if (currentPaymentAmount.getText().matches("^[0-9]*$")) {
-                    cabin.setCurrentPaymentAmount(Integer.parseInt(currentPaymentAmount.getText()));
-                }
                 if (inventoryPrice.getText().matches("^[0-9]*$")) {
                     cabin.setInventoryPrice(Integer.parseInt(inventoryPrice.getText()));
                 }
-
                 cabin.setAdditionalInfo(info.getText());
+                cabin.updateCabin();
                 return new Pair<>(true, cabin);
             } else {
                 return new Pair<>(false, cabin);
             }
         });
-
-        //Optional<Pair<Boolean, Cabin>> result = dialog.showAndWait();
         return dialog.showAndWait().get();
     }
 
@@ -359,7 +354,7 @@ public class CabinsTab extends Tab implements Loadable {
             String[] dates = new String[objects.length];
             for (int i = 0; i < objects.length; i++) {
                 if (objects[i] != null && objects[i] != "0") {
-                    dates[i] = (String) objects[i];
+                    dates[i] = objects[i].toString();
                 } else {
                     dates[i] = "0";
                 }

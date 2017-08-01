@@ -13,7 +13,6 @@ public class Accounting extends Application {
         try {
             DataProcessing.connectToDatabase();
             DataProcessing.updateDatabaseOnNewMonth(LocalDate.now());
-            //ExcelLoader.load();
         } catch (SQLException e) {
             e.printStackTrace();
         }

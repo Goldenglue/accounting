@@ -10,6 +10,7 @@ import javafx.scene.control.TableView;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -26,6 +27,11 @@ abstract class PaymentTab extends Tab implements Loadable {
         List<Payment> payments = new ArrayList<>();
         try {
             while (resultSet.next()) {
+                Object[] cabins = (Object[]) resultSet.getArray(7).getArray();
+                Integer[] cabinsNumbers = new Integer[cabins.length];
+                for (int i = 0; i < cabins.length; i++) {
+                    cabinsNumbers[i] = (Integer)cabins[i];
+                }
                 payments.add(new PaymentBuilder()
                         .setDate(resultSet.getDate(2).toLocalDate())
                         .setPayment(resultSet.getString(3))
@@ -33,6 +39,7 @@ abstract class PaymentTab extends Tab implements Loadable {
                         .setSum(resultSet.getInt(5))
                         .setID(resultSet.getInt(1))
                         .setCashType(resultSet.getBoolean(6) ? CashType.CASH : CashType.CASHLESS)
+                        .setCabinsNumbers(new ArrayList<>(Arrays.asList(cabinsNumbers)))
                         .createPayment());
                 payments.sort(Comparator.comparingInt(Payment::getID));
             }

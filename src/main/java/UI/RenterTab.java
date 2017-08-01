@@ -11,10 +11,12 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Pair;
+import javafx.util.converter.IntegerStringConverter;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -68,11 +70,11 @@ public class RenterTab extends Tab implements Loadable {
         rentedCabinsTableColumn.setPrefWidth(200);
 
         renterDebtTableColumn = new TableColumn<>("Долг");
-        renterDebtTableColumn.setCellValueFactory(new PropertyValueFactory<>("debt"));
+        renterDebtTableColumn.setCellValueFactory(new PropertyValueFactory<>("debtAmount"));
         renterDebtTableColumn.setPrefWidth(60);
 
         renterPhoneTableColumn = new TableColumn<>("Номер телефона");
-        renterPhoneTableColumn.setCellValueFactory(new PropertyValueFactory<>("phone"));
+        renterPhoneTableColumn.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
         renterPhoneTableColumn.setPrefWidth(150);
 
         renterEmailTableColumn = new TableColumn<>("Email");
@@ -90,6 +92,10 @@ public class RenterTab extends Tab implements Loadable {
     }
 
     private void createGUI() {
+        final Button update = new Button("Обновить");
+        update.setOnAction(event -> loadFromDatabase("RENTERS_INFO"));
+        update.setPrefWidth(100);
+
         final TextField renter = new TextField();
         renter.setPromptText("Арендатор");
         renter.setPrefWidth(renterTableColumn.getPrefWidth());
@@ -131,7 +137,7 @@ public class RenterTab extends Tab implements Loadable {
 
         vBox.setSpacing(5);
         vBox.setPadding(new Insets(10, 0, 0, 10));
-        vBox.getChildren().addAll(setTableUp(), addRenterBox, infoAndRentBox);
+        vBox.getChildren().addAll(update, setTableUp(), addRenterBox, infoAndRentBox);
     }
 
     private Pair<Boolean, Renter> showInfo(Renter renter) {
@@ -205,24 +211,33 @@ public class RenterTab extends Tab implements Loadable {
         List<Renter> renters = new ArrayList<>();
         try {
             while (set.next()) {
-                Object[] objects = (Object[]) set.getArray(2).getArray();
-                Integer[] numbers = new Integer[objects.length];
-                for (int i = 0; i < objects.length; i++) {
-                    numbers[i] = Integer.parseInt((String) objects[i]);
-                }
-                renters.add(new RenterBuilder()
-                        .setRenter(set.getString(1))
-                        .setRentedCabins(numbers)
-                        .setDebtAmount(set.getInt(3))
-                        .setPhoneNumber(set.getString(4))
-                        .setEmail(set.getString(5))
-                        .setInfo(set.getString(6))
-                        .createRenter());
+                renters.add(constructRenter(set));
             }
             return renters;
         } catch (SQLException e) {
             e.printStackTrace();
             return renters;
+        }
+    }
+
+    public static  Renter constructRenter(ResultSet set) {
+        try {
+            Object[] objects = (Object[]) set.getArray(2).getArray();
+            Integer[] numbers = new Integer[objects.length];
+            for (int i = 0; i < objects.length; i++) {
+                numbers[i] = Integer.parseInt((String) objects[i]);
+            }
+            return new RenterBuilder()
+                    .setRenter(set.getString(1))
+                    .setRentedCabins(numbers)
+                    .setDebtAmount(set.getInt(3))
+                    .setPhoneNumber(set.getString(4))
+                    .setEmail(set.getString(5))
+                    .setInfo(set.getString(6))
+                    .createRenter();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

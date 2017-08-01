@@ -58,6 +58,7 @@ public class Cabin {
         setIsPaid(true);
         getPaymentDates().add(date);
         setCurrentPaymentDate(date.getDayOfMonth());
+        DataProcessing.updateCabinPaymentStatus(this);
     }
 
     public void toStock() {
@@ -70,7 +71,10 @@ public class Cabin {
         getPreviousRenters().add(getRenter());
         setRenter("");
         setStatus(StockStatus.IN_STOCK);
+    }
 
+    public void updateCabin() {
+        DataProcessing.updateCabin(this);
     }
 
     public int getNumber() {

@@ -1,6 +1,7 @@
 package database;
 
 import UI.CabinsTab;
+import UI.RenterTab;
 import dataclasses.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,16 +50,17 @@ public class DataProcessing {
 
     public static void updateDatabaseOnNewMonth(LocalDate date) throws SQLException {
         Statement statement = connection.createStatement();
-        String query = "CREATE TABLE IF NOT EXISTS PAYMENTS." + Utils.formatDateToMMM_yyyyString(date) + "("
-                + "ID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,"
-                + "DATE DATE NOT NULL ,"
-                + "PAYMENT VARCHAR(256) NOT NULL,"
-                + "TYPE VARCHAR(45) NOT NULL,"
-                + "AMOUNT  INT NOT NULL"
-                + ")";
-        logger.info("Executing query: " + query);
-        statement.executeUpdate(query);
-        logger.info("Created database " + date);
+        String kek = "CREATE TABLE IF NOT EXISTS PAYMENTS." + Utils.formatDateToMMM_yyyyString(date) + "\n" +
+                "(\n" +
+                "  ID integer AUTO_INCREMENT NOT NULL,\n" +
+                "  DATE date NOT NULL,\n" +
+                "  PAYMENT varchar(256) NOT NULL,\n" +
+                "  TYPE boolean NOT NULL,\n" +
+                "  AMOUNT integer NOT NULL,\n" +
+                "  PAYMENT_TYPE boolean,\n" +
+                "  CABINS_NUMBERS array NOT NULL)\n";
+        logger.info("Executing query:\n " + kek);
+        statement.executeUpdate(kek);
     }
 
     public static int insertPayment(Payment payment, String period) {
@@ -103,6 +105,7 @@ public class DataProcessing {
         payment.getCabinsNumbers().forEach(integer -> {
             Cabin cabin = getCabinByRenterAndNumber(payment.getPayment(), integer);
             assert cabin != null;
+            logger.info(cabin.getPaymentDates());
             cabin.getPaymentDates().remove(payment.getDate());
             try {
                 PreparedStatement ps = connection.prepareStatement("UPDATE CABINS.CABINS SET IS_PAID = ?, PAYMENT_DATES = ?, CURRENT_PAYMENT_DATE = ? WHERE RENTER= ? AND NUMBER = ?");
@@ -159,7 +162,7 @@ public class DataProcessing {
             ps.setArray(2, connection.createArrayOf("VARCHAR", cabin.getPaymentDates().stream().map(Utils::formatDateToyyyyMMdd).toArray()));
             ps.setInt(3, cabin.getCurrentPaymentDate());
             ps.setInt(4, cabin.getID());
-            logger.info(cabin.getName());
+            logger.info(cabin.getNumber());
             logger.info("Query: " + ps.toString());
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -178,6 +181,18 @@ public class DataProcessing {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public static void updateCabin(Cabin cabin) {
+        try {
+            PreparedStatement ps = connection.prepareStatement("UPDATE CABINS.CABINS SET NAME = ?, RENT_PRICE = ?, INVENTORY_PRICE = ?, INFO = ?");
+            ps.setString(1, cabin.getName());
+            ps.setInt(2, cabin.getRentPrice());
+            ps.setInt(3, cabin.getInventoryPrice());
+            ps.setString(4, cabin.getAdditionalInfo());
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -231,10 +246,6 @@ public class DataProcessing {
         return null;
     }
 
-    public static void matchRenterToCabin(Renter renter, Cabin cabin) {
-
-    }
-
     public static void deleteCabin(Cabin cabin) {
         try {
             PreparedStatement ps = connection.prepareStatement("DELETE FROM CABINS.CABINS WHERE ID = ?");
@@ -258,6 +269,40 @@ public class DataProcessing {
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    public static void updateRenterDebt(Renter renter) {
+        try {
+            PreparedStatement ps = connection.prepareStatement("UPDATE RENTERS.RENTERS_INFO SET DEBT = ? WHERE RENTER = ?");
+            ps.setInt(1, renter.getDebtAmount());
+            ps.setString(2, renter.getRenter());
+            logger.info("Renters debt amount: " + renter.getDebtAmount());
+            logger.info(ps.executeUpdate());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteRener(Renter renter) {
+    }
+
+    public static void matchRenterToCabin(Renter renter, Cabin cabin) {
+
+    }
+
+    public static Renter getRenterByName(String name) {
+        try {
+            logger.info("Renters name: " + name);
+            PreparedStatement ps = connection.prepareStatement("SELECT * FROM RENTERS.RENTERS_INFO WHERE RENTER = ?");
+            ps.setString(1, name);
+            ResultSet set = ps.executeQuery();
+            set.next();
+            logger.info(set.getString(1));
+            return RenterTab.constructRenter(set);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 

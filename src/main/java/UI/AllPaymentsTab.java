@@ -16,10 +16,12 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.Pair;
 import javafx.util.converter.IntegerStringConverter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.DataOutput;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -40,6 +42,7 @@ public class AllPaymentsTab extends PaymentTab {
     private TableColumn<Payment, Integer> sumColumn;
     private ComboBox<String> periodComboBox;
     private DatePicker datePicker;
+    private TextField addPayment;
     private static Logger logger = LogManager.getLogger();
 
     AllPaymentsTab() {
@@ -130,7 +133,8 @@ public class AllPaymentsTab extends PaymentTab {
 
         ContextMenu infoMenu = new ContextMenu();
 
-        final TextField addPayment = new TextField();
+
+        addPayment = new TextField();
         addPayment.setPrefWidth(paymentColumn.getPrefWidth());
         addPayment.setPromptText("Платеж");
         addPayment.setContextMenu(infoMenu);
@@ -167,22 +171,42 @@ public class AllPaymentsTab extends PaymentTab {
         addButton.setOnAction(action -> {
             ArrayList<Integer> paidCabinsNumbers = null;
             if (typeComboBox.getValue() == PaymentType.RENT) {
-                paidCabinsNumbers = createPaymentDialog(addPayment.getText(), Integer.parseInt(addSum.getText()));
+                Pair<Boolean, ArrayList<Integer>> result = createPaymentDialog(addPayment.getText(), Integer.parseInt(addSum.getText()));
+                if (result.getKey()) {
+                    paidCabinsNumbers = result.getValue();
+                    Payment payment = new PaymentBuilder()
+                            .setDate(datePicker.getValue())
+                            .setPayment(addPayment.getText())
+                            .setType(typeComboBox.getValue())
+                            .setCashType(cashType.getValue())
+                            .setSum(Integer.parseInt(addSum.getText()))
+                            .setCabinsNumbers(paidCabinsNumbers)
+                            .createPayment();
+                    logger.info("Affected cabins numbers: " + paidCabinsNumbers);
+                    payment.setID(DataProcessing.insertPayment(payment, periodComboBox.getValue()));
+                    System.out.println(payment.toString());
+                    paymentObservableList.add(payment);
+                    addPayment.clear();
+                    addSum.clear();
+                } else {
+                    addPayment.clear();
+                    addSum.clear();
+                }
+            } else {
+                Payment payment = new PaymentBuilder()
+                        .setDate(datePicker.getValue())
+                        .setPayment(addPayment.getText())
+                        .setType(typeComboBox.getValue())
+                        .setCashType(cashType.getValue())
+                        .setSum(Integer.parseInt(addSum.getText()))
+                        .setCabinsNumbers(paidCabinsNumbers)
+                        .createPayment();
+                payment.setID(DataProcessing.insertPayment(payment, periodComboBox.getValue()));
+                System.out.println(payment.toString());
+                paymentObservableList.add(payment);
+                addPayment.clear();
+                addSum.clear();
             }
-            logger.info("Affected cabins numbers: " + paidCabinsNumbers);
-            Payment payment = new PaymentBuilder()
-                    .setDate(datePicker.getValue())
-                    .setPayment(addPayment.getText())
-                    .setType(typeComboBox.getValue())
-                    .setCashType(cashType.getValue())
-                    .setSum(Integer.parseInt(addSum.getText()))
-                    .setCabinsNumbers(paidCabinsNumbers)
-                    .createPayment();
-            payment.setID(DataProcessing.insertPayment(payment, periodComboBox.getValue()));
-            System.out.println(payment.toString());
-            paymentObservableList.add(payment);
-            addPayment.clear();
-            addSum.clear();
         });
         addButton.setDefaultButton(true);
 
@@ -211,14 +235,14 @@ public class AllPaymentsTab extends PaymentTab {
 
     }
 
-    private ArrayList<Integer> createPaymentDialog(String renter, Integer sum) {
+    private Pair<Boolean, ArrayList<Integer>> createPaymentDialog(String renter, Integer sum) {
         List<Integer> cabinsNumbers = new ArrayList<>();
         cabinsNumbers.addAll(Arrays.asList(DataProcessing.getRentedCabinsByRenter(renter)));
-        Dialog<ArrayList<Integer>> dialog = new Dialog<>();
+        Dialog<Pair<Boolean, ArrayList<Integer>>> dialog = new Dialog<>();
         dialog.setTitle("Платеж");
 
         ButtonType payType = new ButtonType("Оплатить", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(payType);
+        dialog.getDialogPane().getButtonTypes().addAll(payType, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
         ScrollPane pane = new ScrollPane();
@@ -229,12 +253,30 @@ public class AllPaymentsTab extends PaymentTab {
 
         Map<Cabin, Boolean> cabins = cabinsNumbers
                 .stream()
-                .map(integer -> DataProcessing.getCabinByRenterAndNumber(renter, integer))
+                .map(integer -> {
+                    Cabin cabin = DataProcessing.getCabinByRenterAndNumber(renter, integer);
+                    if (cabin != null) {
+                        cabin.getPaymentDates().forEach(date -> {
+                            if (!date.getMonth().equals(datePicker.getValue().getMonth())) {
+                                cabin.setIsPaid(false);
+                                System.out.println(cabin.isIsPaid());
+                            }
+                        });
+                    }
+                    return cabin;
+                })
                 .collect(Collectors.toMap(Function.identity(), value -> false));
 
-        ObservableValue<Integer> alreadyPaidAmount = new ReadOnlyObjectWrapper<>(cabins.keySet().stream().filter(Cabin::isIsPaid).mapToInt(Cabin::getRentPrice).sum());
+        ObservableValue<Integer> alreadyPaidAmount = new ReadOnlyObjectWrapper<>(cabins.keySet().stream().filter(Cabin::isIsPaid).mapToInt(Cabin::getRentPrice)
+                .sum());
+        ObservableValue<Integer> possibleDebt = new ReadOnlyObjectWrapper<>(cabins.keySet().stream()
+                .filter(cabin -> !cabin.isIsPaid())
+                .mapToInt(Cabin::getRentPrice)
+                .sum());
 
         StringProperty alreadyPaidString = new SimpleStringProperty(String.valueOf(alreadyPaidAmount.getValue()));
+        StringProperty possibleDebtForTextField = new SimpleStringProperty(String.valueOf(possibleDebt.getValue()));
+        StringProperty possibleDebtAmount = new SimpleStringProperty("Зачислить долгом " + String.valueOf(possibleDebt.getValue()));
         Label alreadyPaid = new Label(alreadyPaidString.toString());
         alreadyPaid.textProperty().bind(alreadyPaidString);
 
@@ -248,12 +290,11 @@ public class AllPaymentsTab extends PaymentTab {
                 if (!cabin.isIsPaid()) {
                     cabins.replace(cabin, !isPaid);
                     alreadyPaidString.setValue(String.valueOf(Integer.parseInt(alreadyPaidString.getValue()) + cabin.getRentPrice()));
+                    possibleDebtForTextField.setValue(String.valueOf((Integer.parseInt(possibleDebtForTextField.getValue()) - cabin.getRentPrice())));
+                    possibleDebtAmount.setValue("Зачислить долгом " + possibleDebtForTextField.get());
                     cabin.payForCabin(datePicker.getValue());
-                    cabins.replace(cabin, !isPaid);
-                    DataProcessing.updateCabinPaymentStatus(cabin);
                 }
             });
-
             grid.add(amountToPay, 0, index);
             grid.add(text, 1, index);
             grid.add(button, 2, index);
@@ -267,19 +308,42 @@ public class AllPaymentsTab extends PaymentTab {
         int index = cabins.size();
         grid.add(new Label("Всего к оплате:"), 0, index);
         grid.add(totalToPay, 1, index);
+        grid.add(new Label("Предоставлено:"), 0, ++index);
+        grid.add(new Label(String.valueOf(sum)), 1, index);
         grid.add(new Label("Оплачено:"), 0, ++index);
         grid.add(alreadyPaid, 1, index);
+
+        final TextField debtField  = new TextField();
+        debtField.textProperty().bind(possibleDebtForTextField);
+        final Button countAsDebt = new Button();
+        countAsDebt.setOnAction(event -> {
+            Renter renterByName = DataProcessing.getRenterByName(renter);
+            assert renterByName != null;
+            renterByName.setDebtAmount(Integer.parseInt(debtField.getText()));
+            DataProcessing.updateRenterDebt(renterByName);
+        });
+        countAsDebt.textProperty().bind(possibleDebtAmount);
+        grid.add(new Label("Потенциальный долг"), 0, ++index);
+        grid.add(debtField,1,index);
+        grid.add(countAsDebt, 2, index);
+
 
         grid.setPrefHeight(500);
         pane.setContent(grid);
         pane.setPrefViewportHeight(500);
         dialog.getDialogPane().setContent(pane);
-        dialog.setResultConverter(value -> cabins
-                .entrySet()
-                .stream()
-                .filter(Map.Entry::getValue)
-                .map(cabin -> cabin.getKey().getNumber())
-                .collect(Collectors.toCollection(ArrayList::new)));
+        dialog.setResultConverter(result -> {
+            if (result == payType) {
+                return new Pair<>(true, cabins
+                        .entrySet()
+                        .stream()
+                        .filter(Map.Entry::getValue)
+                        .map(cabin -> cabin.getKey().getNumber())
+                        .collect(Collectors.toCollection(ArrayList::new)));
+            } else {
+                return new Pair<>(false, new ArrayList<>());
+            }
+        });
 
         return dialog.showAndWait().get();
     }
