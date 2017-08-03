@@ -127,10 +127,7 @@ public class AllPaymentsTab extends PaymentTab {
         datePicker = new DatePicker(LocalDate.now());
         datePicker.setMaxWidth(dateColumn.getPrefWidth());
 
-
-
         ContextMenu infoMenu = new ContextMenu();
-
 
         addPayment = new TextField();
         addPayment.setPrefWidth(paymentColumn.getPrefWidth());

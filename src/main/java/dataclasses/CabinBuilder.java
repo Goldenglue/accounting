@@ -3,7 +3,7 @@ package dataclasses;
 import java.time.LocalDate;
 
 public class CabinBuilder {
-    private int id = 0;
+    private int id;
     private int number;
     private String name;
     private int rentPrice = 0;

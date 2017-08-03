@@ -213,9 +213,9 @@ public class CabinsTab extends Tab implements Loadable {
         final Button removeButton = new Button("Удалить");
         removeButton.setOnAction(event -> {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Удаление строки из таблицы");
+            alert.setTitle("Удаление бытовки");
             alert.setHeaderText(null);
-            alert.setContentText("Вы действительно хотите удалить эту строку?" + "\n" + (table.getSelectionModel().getSelectedItem()).getName());
+            alert.setContentText("Удалить бытовку?" + "\n" + (table.getSelectionModel().getSelectedItem()).getName());
             alert.showAndWait()
                     .filter(response -> response == ButtonType.OK)
                     .ifPresent(response -> {
@@ -226,13 +226,33 @@ public class CabinsTab extends Tab implements Loadable {
         });
 
         final Button showInfo = new Button("Подробная информация");
-        showInfo.setOnAction(event -> System.out.println(showInfo(table.getSelectionModel().getSelectedItem()).getKey()));
+        showInfo.setOnAction(event -> {
+            Pair<Boolean, Cabin> result = showInfo(table.getSelectionModel().getSelectedItem());
+            if (result.getKey()) {
+                result.getValue().updateCabin();
+            }
+        });
 
         final Button toRent = new Button("В аренду");
-        toRent.setOnAction(event -> toRentDialog(table.getSelectionModel().getSelectedItem()));
+        toRent.setOnAction(event -> {
+            Pair<Boolean, Pair<Cabin, Renter>> result = toRentDialog(table.getSelectionModel().getSelectedItem());
+            if (result.getKey()) {
+                DataProcessing.updateCabinStockStatus(result.getValue().getKey(), false);
+                DataProcessing.updateRenter(result.getValue().getValue());
+            }
+
+        });
 
         final Button toStock = new Button("На склад");
-        toStock.setOnAction(event -> table.getSelectionModel().getSelectedItem().toStock());
+        toStock.setOnAction(event -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("На склад");
+            alert.setHeaderText(null);
+            alert.setContentText("Отправить на склад?" + "\n" + (table.getSelectionModel().getSelectedItem()).getName());
+            alert.showAndWait()
+                    .filter(response -> response == ButtonType.OK)
+                    .ifPresent(response -> table.getSelectionModel().getSelectedItem().toStock());
+        });
 
         HBox addRemoveBox = new HBox();
         addRemoveBox.getChildren().addAll(types, status, selectPeriodTypes);
@@ -337,7 +357,6 @@ public class CabinsTab extends Tab implements Loadable {
                     cabin.setInventoryPrice(Integer.parseInt(inventoryPrice.getText()));
                 }
                 cabin.setAdditionalInfo(info.getText());
-                cabin.updateCabin();
                 return new Pair<>(true, cabin);
             } else {
                 return new Pair<>(false, cabin);
@@ -346,8 +365,8 @@ public class CabinsTab extends Tab implements Loadable {
         return dialog.showAndWait().get();
     }
 
-    private Pair<Boolean, Cabin> toRentDialog(Cabin cabin) {
-        Dialog<Pair<Boolean, Cabin>> dialog = new Dialog<>();
+    private Pair<Boolean, Pair<Cabin, Renter>> toRentDialog(Cabin cabin) {
+        Dialog<Pair<Boolean, Pair<Cabin, Renter>>> dialog = new Dialog<>();
         dialog.setTitle("В аренду");
 
         GridPane grid = new GridPane();
@@ -396,9 +415,12 @@ public class CabinsTab extends Tab implements Loadable {
         dialog.setResultConverter(value -> {
             if (value == saveType) {
                 cabin.toRent(rentersName.getText(), Integer.parseInt(rentPrice.getText()), datePicker.getValue());
-                return new Pair<>(true, cabin);
+                Renter renter = DataProcessing.getRenterByName(cabin.getRenter());
+                assert renter != null;
+                renter.getRentedCabins().add(cabin.getNumber());
+                return new Pair<>(true, new Pair<>(cabin, renter));
             } else {
-                return new Pair<>(false, cabin);
+                return new Pair<>(false, new Pair<>(cabin, null));
             }
         });
         return dialog.showAndWait().get();

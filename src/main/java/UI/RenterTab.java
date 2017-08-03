@@ -1,5 +1,6 @@
 package UI;
 
+import com.sun.org.apache.regexp.internal.RE;
 import database.DataProcessing;
 import dataclasses.Loadable;
 import dataclasses.Renter;
@@ -20,6 +21,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class RenterTab extends Tab implements Loadable {
     private ObservableList<Renter> renters = FXCollections.observableArrayList();
@@ -112,18 +114,33 @@ public class RenterTab extends Tab implements Loadable {
 
         final Button addRenter = new Button("Добавить арендатора");
         addRenter.setOnAction(event -> {
-            new RenterBuilder()
+            Renter temp = new RenterBuilder()
                     .setRenter(renter.getText())
                     .setPhoneNumber(phone.getText())
                     .setEmail(email.getText())
                     .setInfo(info.getText())
                     .createRenter();
+            DataProcessing.insertRenter(temp);
         });
 
         final Button removeRenter = new Button("Удалить арендатора");
+        removeRenter.setOnAction(event -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Удаление арендатора");
+            alert.setHeaderText(null);
+            alert.setContentText("Удалить арендатора?" + "\n" + (renterTable.getSelectionModel().getSelectedItem()).getRenter());
+            alert.showAndWait()
+                    .filter(response -> response == ButtonType.OK)
+                    .ifPresent(response -> DataProcessing.deleteRenter(renterTable.getSelectionModel().getSelectedItem()));
+        });
 
         final Button showInfo = new Button("Показать информацию");
-        showInfo.setOnAction(event -> showInfo(renterTable.getSelectionModel().getSelectedItem()));
+        showInfo.setOnAction(event -> {
+            Pair<Boolean, Renter> result = showInfo(renterTable.getSelectionModel().getSelectedItem());
+            if (result.getKey()) {
+                DataProcessing.updateRenter(result.getValue());
+            }
+        });
 
         final Button rentSettings = new Button("Настройки аренды");
 
@@ -223,7 +240,9 @@ public class RenterTab extends Tab implements Loadable {
             Object[] objects = (Object[]) set.getArray(2).getArray();
             Integer[] numbers = new Integer[objects.length];
             for (int i = 0; i < objects.length; i++) {
-                numbers[i] = Integer.parseInt((String) objects[i]);
+                if (objects[i] != null && !Objects.equals(objects[i], "")) {
+                    numbers[i] = Integer.parseInt((String) objects[i]);
+                }
             }
             return new RenterBuilder()
                     .setRenter(set.getString(1))

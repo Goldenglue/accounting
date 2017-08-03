@@ -62,7 +62,6 @@ public class Cabin {
     }
 
     public void toStock() {
-        DataProcessing.updateCabinStockStatus(this, true);
         setCurrentPaymentAmount(0);
         setTransferDate(null);
         setIsPaid(false);
@@ -71,6 +70,7 @@ public class Cabin {
         getPreviousRenters().add(getRenter());
         setRenter("");
         setStatus(StockStatus.IN_STOCK);
+        DataProcessing.updateCabinStockStatus(this, true);
     }
 
     public void toRent(String renter, Integer rentPrice, LocalDate transferDate) {
@@ -82,7 +82,6 @@ public class Cabin {
         setPaymentDates(null);
         setCurrentPaymentDate(0);
         setStatus(StockStatus.NOT_IN_STOCK);
-
     }
 
     public void updateCabin() {

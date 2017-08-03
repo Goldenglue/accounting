@@ -2,11 +2,11 @@ package dataclasses;
 
 public class RenterBuilder {
     private String renter;
-    private Integer[] rentedCabins;
+    private Integer[] rentedCabins = new Integer[1];
     private Integer debtAmount = 0;
-    private String phoneNumber;
-    private String email;
-    private String info;
+    private String phoneNumber = "";
+    private String email = "";
+    private String info = "";
 
     public RenterBuilder setRenter(String renter) {
         this.renter = renter;
