@@ -306,7 +306,7 @@ public class DataProcessing {
         }
     }
 
-    public static List<String> getRenters() {
+    public static List<String> getRentersNames() {
         List<String> renters = new ArrayList<>();
         try {
             Statement statement = connection.createStatement();

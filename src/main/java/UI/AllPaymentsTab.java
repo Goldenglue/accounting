@@ -21,14 +21,11 @@ import javafx.util.converter.IntegerStringConverter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.DataOutput;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -43,6 +40,7 @@ public class AllPaymentsTab extends PaymentTab {
     private ComboBox<String> periodComboBox;
     private DatePicker datePicker;
     private TextField addPayment;
+    public static List<String> rentersNames = DataProcessing.getRentersNames();
     private static Logger logger = LogManager.getLogger();
 
     AllPaymentsTab() {
@@ -129,7 +127,7 @@ public class AllPaymentsTab extends PaymentTab {
         datePicker = new DatePicker(LocalDate.now());
         datePicker.setMaxWidth(dateColumn.getPrefWidth());
 
-        List<String> info = DataProcessing.getRenters();
+
 
         ContextMenu infoMenu = new ContextMenu();
 
@@ -140,7 +138,7 @@ public class AllPaymentsTab extends PaymentTab {
         addPayment.setContextMenu(infoMenu);
         addPayment.setOnKeyReleased(event -> {
             infoMenu.getItems().clear();
-            info.stream()
+            rentersNames.stream()
                     .filter(item -> item.toLowerCase().contains(addPayment.getText()) || item.contains(addPayment.getText()))
                     .limit(10)
                     .forEach(infoItem -> {
@@ -169,7 +167,7 @@ public class AllPaymentsTab extends PaymentTab {
 
         final Button addButton = new Button("Добавить");
         addButton.setOnAction(action -> {
-            ArrayList<Integer> paidCabinsNumbers = null;
+            ArrayList<Integer> paidCabinsNumbers;
             if (typeComboBox.getValue() == PaymentType.RENT) {
                 Pair<Boolean, ArrayList<Integer>> result = createPaymentDialog(addPayment.getText(), Integer.parseInt(addSum.getText()));
                 if (result.getKey()) {
@@ -199,7 +197,6 @@ public class AllPaymentsTab extends PaymentTab {
                         .setType(typeComboBox.getValue())
                         .setCashType(cashType.getValue())
                         .setSum(Integer.parseInt(addSum.getText()))
-                        .setCabinsNumbers(paidCabinsNumbers)
                         .createPayment();
                 payment.setID(DataProcessing.insertPayment(payment, periodComboBox.getValue()));
                 System.out.println(payment.toString());
@@ -251,7 +248,7 @@ public class AllPaymentsTab extends PaymentTab {
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
 
-        Map<Cabin, Boolean> cabins = cabinsNumbers
+        List<Cabin> cabins = cabinsNumbers
                 .stream()
                 .map(integer -> {
                     Cabin cabin = DataProcessing.getCabinByRenterAndNumber(renter, integer);
@@ -265,34 +262,31 @@ public class AllPaymentsTab extends PaymentTab {
                     }
                     return cabin;
                 })
-                .collect(Collectors.toMap(Function.identity(), value -> false));
-
-        ObservableValue<Integer> alreadyPaidAmount = new ReadOnlyObjectWrapper<>(cabins.keySet().stream().filter(Cabin::isIsPaid).mapToInt(Cabin::getRentPrice)
-                .sum());
-        ObservableValue<Integer> possibleDebt = new ReadOnlyObjectWrapper<>(cabins.keySet().stream()
                 .filter(cabin -> !cabin.isIsPaid())
+                .collect(Collectors.toList());
+        logger.info("Total amount of cabins is " + cabins.size());
+
+        ObservableValue<Integer> alreadyPaid = new ReadOnlyObjectWrapper<>(cabins.stream()
+                .filter(Cabin::isIsPaid)
                 .mapToInt(Cabin::getRentPrice)
                 .sum());
 
-        StringProperty alreadyPaidString = new SimpleStringProperty(String.valueOf(alreadyPaidAmount.getValue()));
-        StringProperty possibleDebtForTextField = new SimpleStringProperty(String.valueOf(possibleDebt.getValue()));
-        StringProperty possibleDebtAmount = new SimpleStringProperty("Зачислить долгом " + String.valueOf(possibleDebt.getValue()));
-        Label alreadyPaid = new Label(alreadyPaidString.toString());
-        alreadyPaid.textProperty().bind(alreadyPaidString);
 
-        cabins.forEach((cabin, isPaid) -> {
-            int index = cabinsNumbers.indexOf(cabin.getNumber());
+        StringProperty alreadyPaidAmount = new SimpleStringProperty(String.valueOf(alreadyPaid.getValue()));
+        Label alreadyPaidLabel = new Label(alreadyPaidAmount.toString());
+        alreadyPaidLabel.textProperty().bind(alreadyPaidAmount);
+
+        cabins.forEach(cabin -> {
+            int index = cabins.indexOf(cabin);
             Label amountToPay = new Label("К оплате за " + String.valueOf(cabin.getNumber()));
             Label text = new Label(String.valueOf(cabin.getRentPrice()));
 
             Button button = new Button("Оплатить " + String.valueOf(cabin.getNumber()));
             button.setOnAction(event -> {
                 if (!cabin.isIsPaid()) {
-                    cabins.replace(cabin, !isPaid);
-                    alreadyPaidString.setValue(String.valueOf(Integer.parseInt(alreadyPaidString.getValue()) + cabin.getRentPrice()));
-                    possibleDebtForTextField.setValue(String.valueOf((Integer.parseInt(possibleDebtForTextField.getValue()) - cabin.getRentPrice())));
-                    possibleDebtAmount.setValue("Зачислить долгом " + possibleDebtForTextField.get());
+                    alreadyPaidAmount.setValue(String.valueOf(Integer.parseInt(alreadyPaidAmount.getValue()) + cabin.getRentPrice()));
                     cabin.payForCabin(datePicker.getValue());
+                    button.setDisable(true);
                 }
             });
             grid.add(amountToPay, 0, index);
@@ -301,7 +295,7 @@ public class AllPaymentsTab extends PaymentTab {
         });
 
 
-        Label totalToPay = new Label(String.valueOf(cabins.keySet().stream()
+        Label totalToPay = new Label(String.valueOf(cabins.stream()
                 .mapToInt(Cabin::getRentPrice)
                 .sum()));
 
@@ -311,21 +305,26 @@ public class AllPaymentsTab extends PaymentTab {
         grid.add(new Label("Предоставлено:"), 0, ++index);
         grid.add(new Label(String.valueOf(sum)), 1, index);
         grid.add(new Label("Оплачено:"), 0, ++index);
-        grid.add(alreadyPaid, 1, index);
+        grid.add(alreadyPaidLabel, 1, index);
 
-        final TextField debtField  = new TextField();
-        debtField.textProperty().bind(possibleDebtForTextField);
-        final Button countAsDebt = new Button();
+        final TextField debtField = new TextField();
+        debtField.setEditable(true);
+        final Button countAsDebt = new Button("Зачислить долгом");
         countAsDebt.setOnAction(event -> {
             Renter renterByName = DataProcessing.getRenterByName(renter);
             assert renterByName != null;
             renterByName.setDebtAmount(Integer.parseInt(debtField.getText()));
             DataProcessing.updateRenterDebt(renterByName);
         });
-        countAsDebt.textProperty().bind(possibleDebtAmount);
-        grid.add(new Label("Потенциальный долг"), 0, ++index);
-        grid.add(debtField,1,index);
-        grid.add(countAsDebt, 2, index);
+        Integer possibleDebtAmountValue = cabins.stream()
+                .filter(cabin -> !cabin.isIsPaid())
+                .mapToInt(Cabin::getRentPrice)
+                .sum() - sum;
+        Label possibleDebtLabel = new Label(String.valueOf(possibleDebtAmountValue));
+        grid.add(new Label("Потенциальный долг:"), 0, ++index);
+        grid.add(possibleDebtLabel, 1, index);
+        grid.add(debtField, 0, ++index);
+        grid.add(countAsDebt, 1, index);
 
 
         grid.setPrefHeight(500);
@@ -335,10 +334,9 @@ public class AllPaymentsTab extends PaymentTab {
         dialog.setResultConverter(result -> {
             if (result == payType) {
                 return new Pair<>(true, cabins
-                        .entrySet()
                         .stream()
-                        .filter(Map.Entry::getValue)
-                        .map(cabin -> cabin.getKey().getNumber())
+                        .filter(Cabin::isIsPaid)
+                        .map(Cabin::getNumber)
                         .collect(Collectors.toCollection(ArrayList::new)));
             } else {
                 return new Pair<>(false, new ArrayList<>());

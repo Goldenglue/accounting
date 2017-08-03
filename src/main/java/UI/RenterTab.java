@@ -11,12 +11,10 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Pair;
-import javafx.util.converter.IntegerStringConverter;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -167,20 +165,20 @@ public class RenterTab extends Tab implements Loadable {
         renterCabins.getItems().addAll(renter.getRentedCabins());
         renterCabins.getSelectionModel().selectFirst();
         grid.add(new Label("Арендованые вагончики"), 0, ++rowIndex);
-        grid.add(renterCabins,1,rowIndex);
+        grid.add(renterCabins, 1, rowIndex);
 
-        grid.add(new Label("Размер долга"),0,++rowIndex);
-        grid.add(new Label(String.valueOf(renter.getDebtAmount())),1,rowIndex);
+        grid.add(new Label("Размер долга"), 0, ++rowIndex);
+        grid.add(new Label(String.valueOf(renter.getDebtAmount())), 1, rowIndex);
 
         final TextField phoneNumber = new TextField(renter.getPhoneNumber());
         phoneNumber.setEditable(true);
-        grid.add(new Label("Номер телефона"),0,++rowIndex);
-        grid.add(phoneNumber,1,rowIndex);
+        grid.add(new Label("Номер телефона"), 0, ++rowIndex);
+        grid.add(phoneNumber, 1, rowIndex);
 
         final TextField email = new TextField(renter.getEmail());
         email.setEditable(true);
-        grid.add(new Label("Email"),0,++rowIndex);
-        grid.add(email,1,rowIndex);
+        grid.add(new Label("Email"), 0, ++rowIndex);
+        grid.add(email, 1, rowIndex);
 
         final TextArea info = new TextArea();
         info.setPrefRowCount(2);
@@ -220,7 +218,7 @@ public class RenterTab extends Tab implements Loadable {
         }
     }
 
-    public static  Renter constructRenter(ResultSet set) {
+    public static Renter constructRenter(ResultSet set) {
         try {
             Object[] objects = (Object[]) set.getArray(2).getArray();
             Integer[] numbers = new Integer[objects.length];

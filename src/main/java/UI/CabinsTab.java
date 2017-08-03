@@ -6,6 +6,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Side;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.ComboBoxTableCell;
@@ -227,17 +228,18 @@ public class CabinsTab extends Tab implements Loadable {
         final Button showInfo = new Button("Подробная информация");
         showInfo.setOnAction(event -> System.out.println(showInfo(table.getSelectionModel().getSelectedItem()).getKey()));
 
+        final Button toRent = new Button("В аренду");
+        toRent.setOnAction(event -> toRentDialog(table.getSelectionModel().getSelectedItem()));
+
         final Button toStock = new Button("На склад");
-        toStock.setOnAction(event -> {
-            table.getSelectionModel().getSelectedItem().toStock();
-        });
+        toStock.setOnAction(event -> table.getSelectionModel().getSelectedItem().toStock());
 
         HBox addRemoveBox = new HBox();
         addRemoveBox.getChildren().addAll(types, status, selectPeriodTypes);
         hBox.getChildren().addAll(number, name, addButton, removeButton);
 
         HBox manipulationsBox = new HBox();
-        manipulationsBox.getChildren().addAll(showInfo, toStock);
+        manipulationsBox.getChildren().addAll(showInfo, toStock, toRent);
 
         vBox.setSpacing(5);
         vBox.setPadding(new Insets(10, 0, 0, 10));
@@ -323,10 +325,6 @@ public class CabinsTab extends Tab implements Loadable {
         grid.add(new Label("Предыдущие арендаторы"), 0, ++rowIndex);
         grid.add(previousRenters, 1, rowIndex);
 
-        final Button toStock = new Button("На склад");
-        grid.add(toStock, 0, ++rowIndex);
-
-
         dialog.getDialogPane().setContent(grid);
 
         dialog.setResultConverter(value -> {
@@ -340,6 +338,64 @@ public class CabinsTab extends Tab implements Loadable {
                 }
                 cabin.setAdditionalInfo(info.getText());
                 cabin.updateCabin();
+                return new Pair<>(true, cabin);
+            } else {
+                return new Pair<>(false, cabin);
+            }
+        });
+        return dialog.showAndWait().get();
+    }
+
+    private Pair<Boolean, Cabin> toRentDialog(Cabin cabin) {
+        Dialog<Pair<Boolean, Cabin>> dialog = new Dialog<>();
+        dialog.setTitle("В аренду");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        ButtonType saveType = new ButtonType("Сохранить", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelType = new ButtonType("Отменить", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveType, cancelType);
+
+        int rowIndex = 0;
+
+        ContextMenu menuOfRentersNames = new ContextMenu();
+
+        TextField rentersName = new TextField();
+        rentersName.setPromptText("Платеж");
+        rentersName.setContextMenu(menuOfRentersNames);
+        rentersName.setOnKeyReleased(event -> {
+            menuOfRentersNames.getItems().clear();
+            AllPaymentsTab.rentersNames.stream()
+                    .filter(item -> item.toLowerCase().contains(rentersName.getText()) || item.contains(rentersName.getText()))
+                    .limit(10)
+                    .forEach(infoItem -> {
+                        MenuItem menuItem = new MenuItem(infoItem);
+                        menuItem.setOnAction(action -> rentersName.setText(infoItem));
+                        menuOfRentersNames.getItems().add(menuItem);
+                    });
+            menuOfRentersNames.show(rentersName, Side.BOTTOM, 0, 0);
+        });
+        rentersName.setPrefWidth(200);
+        grid.add(new Label("Арендатор"), 0, rowIndex);
+        grid.add(rentersName, 1, rowIndex);
+
+        TextField rentPrice = new TextField();
+        rentPrice.setText(String.valueOf(cabin.getRentPrice()));
+        grid.add(new Label("Стоимость аренды"), 0, ++rowIndex);
+        grid.add(rentPrice, 1, rowIndex);
+
+        DatePicker datePicker = new DatePicker(LocalDate.now());
+        grid.add(new Label("Дата передачи"), 0, ++rowIndex);
+        grid.add(datePicker, 1, rowIndex);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(value -> {
+            if (value == saveType) {
+                cabin.toRent(rentersName.getText(), Integer.parseInt(rentPrice.getText()), datePicker.getValue());
                 return new Pair<>(true, cabin);
             } else {
                 return new Pair<>(false, cabin);
