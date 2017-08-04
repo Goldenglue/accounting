@@ -126,6 +126,7 @@ public class RenterTab extends Tab implements Loadable {
                     .setInfo(info.getText())
                     .createRenter();
             newRenter.setID(DataProcessing.insertRenter(newRenter));
+            AllPaymentsTab.rentersNames = DataProcessing.getRentersNames();
             renter.clear();
             phone.clear();
             email.clear();
@@ -141,6 +142,7 @@ public class RenterTab extends Tab implements Loadable {
             alert.showAndWait()
                     .filter(response -> response == ButtonType.OK)
                     .ifPresent(response -> DataProcessing.deleteRenter(renterTable.getSelectionModel().getSelectedItem()));
+            AllPaymentsTab.rentersNames = DataProcessing.getRentersNames();
         });
 
         final Button showInfo = new Button("Показать информацию");
@@ -148,6 +150,7 @@ public class RenterTab extends Tab implements Loadable {
             Pair<Boolean, Renter> result = showInfo(renterTable.getSelectionModel().getSelectedItem());
             if (result.getKey()) {
                 DataProcessing.updateRenter(result.getValue());
+                AllPaymentsTab.rentersNames = DataProcessing.getRentersNames();
             }
         });
 
