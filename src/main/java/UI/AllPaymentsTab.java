@@ -310,7 +310,7 @@ public class AllPaymentsTab extends PaymentTab {
         countAsDebt.setOnAction(event -> {
             Renter renterByName = DataProcessing.getRenterByName(renter);
             assert renterByName != null;
-            renterByName.setDebtAmount(Integer.parseInt(debtField.getText()));
+            renterByName.setDebtAmount(renterByName.getDebtAmount() - Integer.parseInt(debtField.getText()));
             DataProcessing.updateRenterDebt(renterByName);
         });
         Integer possibleDebtAmountValue = cabins.stream()

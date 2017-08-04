@@ -11,6 +11,7 @@ public class MainWindow {
     private static MechanismsPaymentTab mechanismsPaymentTab;
     private static CabinsTab cabinsTab;
     private static RenterTab renterTab;
+    private static Statistics statisticsTab;
 
     static {
         allPaymentsTab = getPaymentsTab();
@@ -18,6 +19,7 @@ public class MainWindow {
         mechanismsPaymentTab = getMechanismsTab();
         cabinsTab = getCabinsTab();
         renterTab = getRenterTab();
+        statisticsTab = getStatisticsTab();
     }
 
     public static void launch(Stage primaryStage) {
@@ -48,5 +50,7 @@ public class MainWindow {
     private static RenterTab getRenterTab() {
         return new RenterTab();
     }
+
+    private static Statistics getStatisticsTab() { return new Statistics(); }
 
 }

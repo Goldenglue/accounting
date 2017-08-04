@@ -172,6 +172,7 @@ public class CabinsTab extends Tab implements Loadable {
                 .map(s -> s.replaceAll("CABINS", ""))
                 .collect(Collectors.toSet())
         );
+        types.getSelectionModel().selectFirst();
         types.setEditable(false);
         types.setPrefWidth(100);
 

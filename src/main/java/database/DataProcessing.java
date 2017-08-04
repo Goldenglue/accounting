@@ -437,6 +437,18 @@ public class DataProcessing {
         }
     }
 
+    public static ResultSet getRentStatistics() {
+        try {
+            Statement st = connection.createStatement();
+            return st.executeQuery("SELECT count(NUMBER) ,sum(RENT_PRICE), sum(INVENTORY_PRICE), count(case STATUS when 'FALSE' then 1 else null end)," +
+                    " count(case STATUS when 'TRUE' then 1 else null end), count(case IS_PAID when 'FALSE' then 1 else null end), count(case IS_PAID when 'TRUE' then 1 else null end) FROM CABINS.CABINS");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
     public static void backupDatabase() {
         try {
             if (!Files.exists(Paths.get("init.sql"))) {
