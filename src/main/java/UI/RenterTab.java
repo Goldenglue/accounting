@@ -2,6 +2,7 @@ package UI;
 
 import com.sun.org.apache.regexp.internal.RE;
 import database.DataProcessing;
+import dataclasses.Cabin;
 import dataclasses.Loadable;
 import dataclasses.Renter;
 import dataclasses.RenterBuilder;
@@ -93,7 +94,11 @@ public class RenterTab extends Tab implements Loadable {
 
     private void createGUI() {
         final Button update = new Button("Обновить");
-        update.setOnAction(event -> loadFromDatabase("RENTERS_INFO"));
+        update.setOnAction(event -> {
+            renters.clear();
+            renters.addAll(loadFromDatabase("RENTERS_INFO"));
+            System.out.println("Updated renters amount - " + renters.size());
+        });
         update.setPrefWidth(100);
 
         final TextField renter = new TextField();
@@ -114,13 +119,17 @@ public class RenterTab extends Tab implements Loadable {
 
         final Button addRenter = new Button("Добавить арендатора");
         addRenter.setOnAction(event -> {
-            Renter temp = new RenterBuilder()
+            Renter newRenter = new RenterBuilder()
                     .setRenter(renter.getText())
                     .setPhoneNumber(phone.getText())
                     .setEmail(email.getText())
                     .setInfo(info.getText())
                     .createRenter();
-            DataProcessing.insertRenter(temp);
+            newRenter.setID(DataProcessing.insertRenter(newRenter));
+            renter.clear();
+            phone.clear();
+            email.clear();
+            info.clear();
         });
 
         final Button removeRenter = new Button("Удалить арендатора");
@@ -142,13 +151,12 @@ public class RenterTab extends Tab implements Loadable {
             }
         });
 
-        final Button rentSettings = new Button("Настройки аренды");
 
         HBox addRenterBox = new HBox();
         addRenterBox.getChildren().addAll(renter, phone, email, info, addRenter, removeRenter);
 
         HBox infoAndRentBox = new HBox();
-        infoAndRentBox.getChildren().addAll(showInfo, rentSettings);
+        infoAndRentBox.getChildren().addAll(showInfo);
 
         vBox.setSpacing(5);
         vBox.setPadding(new Insets(10, 0, 0, 10));
@@ -207,10 +215,21 @@ public class RenterTab extends Tab implements Loadable {
 
         dialog.setResultConverter(param -> {
             if (param == saveType) {
+                Integer[] cabinsByRenter = DataProcessing.getRentedCabinsByRenter(renter.getRenter());
+                ArrayList<Cabin> cabins = new ArrayList<>();
+                assert cabinsByRenter != null;
+                for (Integer integer : cabinsByRenter) {
+                    cabins.add(DataProcessing.getCabinByRenterAndNumber(renter.getRenter(),integer));
+                }
                 renter.setRenter(renterArea.getText());
                 renter.setPhoneNumber(phoneNumber.getText());
                 renter.setEmail(email.getText());
                 renter.setInfo(info.getText());
+                cabins.forEach(cabin -> {
+                    System.out.println("new renter " + renter.getRenter());
+                    cabin.setRenter(renter.getRenter());
+                    cabin.updateCabin();
+                });
                 return new Pair<>(true, renter);
             } else {
                 return new Pair<>(false, renter);
@@ -238,19 +257,26 @@ public class RenterTab extends Tab implements Loadable {
     public static Renter constructRenter(ResultSet set) {
         try {
             Object[] objects = (Object[]) set.getArray(2).getArray();
-            Integer[] numbers = new Integer[objects.length];
-            for (int i = 0; i < objects.length; i++) {
-                if (objects[i] != null && !Objects.equals(objects[i], "")) {
-                    numbers[i] = Integer.parseInt((String) objects[i]);
+            ArrayList<Integer> numberList = new ArrayList<>();
+            for (Object object : objects) {
+                if (object != null && !Objects.equals(object, "")) {
+                    if (object instanceof Integer) {
+                        System.out.println(object.toString());
+                        numberList.add((Integer) object);
+                    } else if (object instanceof String) {
+                        numberList.add(Integer.parseInt((String) object));
+                    }
+
                 }
             }
             return new RenterBuilder()
                     .setRenter(set.getString(1))
-                    .setRentedCabins(numbers)
+                    .setRentedCabins(numberList)
                     .setDebtAmount(set.getInt(3))
                     .setPhoneNumber(set.getString(4))
                     .setEmail(set.getString(5))
                     .setInfo(set.getString(6))
+                    .setID(set.getInt(7))
                     .createRenter();
         } catch (SQLException e) {
             e.printStackTrace();

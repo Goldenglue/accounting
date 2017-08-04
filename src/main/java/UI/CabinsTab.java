@@ -251,7 +251,18 @@ public class CabinsTab extends Tab implements Loadable {
             alert.setContentText("Отправить на склад?" + "\n" + (table.getSelectionModel().getSelectedItem()).getName());
             alert.showAndWait()
                     .filter(response -> response == ButtonType.OK)
-                    .ifPresent(response -> table.getSelectionModel().getSelectedItem().toStock());
+                    .ifPresent(response -> {
+                        Cabin cabin = table.getSelectionModel().getSelectedItem();
+                        Renter renter = DataProcessing.getRenterByName(cabin.getRenter());
+                        assert renter != null;
+                        ArrayList<Integer> rentedCabins = renter.getRentedCabins();
+                        if (rentedCabins.contains(cabin.getNumber())) {
+                            int index = rentedCabins.indexOf(cabin.getNumber());
+                            rentedCabins.remove(index);
+                            DataProcessing.updateRenter(renter);
+                        }
+                        cabin.toStock();
+                    });
         });
 
         HBox addRemoveBox = new HBox();
@@ -323,8 +334,10 @@ public class CabinsTab extends Tab implements Loadable {
         grid.add(isPaid, 1, rowIndex);
 
         final ComboBox<LocalDate> paymentDates = new ComboBox<>();
-        paymentDates.getItems().addAll(cabin.getPaymentDates());
-        paymentDates.getSelectionModel().selectFirst();
+        if (cabin.getPaymentDates() != null) {
+            paymentDates.getItems().addAll(cabin.getPaymentDates());
+            paymentDates.getSelectionModel().selectFirst();
+        }
         grid.add(new Label("Даты оплаты"), 0, ++rowIndex);
         grid.add(paymentDates, 1, rowIndex);
 

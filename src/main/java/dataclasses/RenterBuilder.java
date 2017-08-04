@@ -1,19 +1,22 @@
 package dataclasses;
 
+import java.util.ArrayList;
+
 public class RenterBuilder {
     private String renter;
-    private Integer[] rentedCabins = new Integer[1];
-    private Integer debtAmount = 0;
+    private ArrayList<Integer> rentedCabins = new ArrayList<>();
+    private int debtAmount ;
     private String phoneNumber = "";
     private String email = "";
     private String info = "";
+    private int ID;
 
     public RenterBuilder setRenter(String renter) {
         this.renter = renter;
         return this;
     }
 
-    public RenterBuilder setRentedCabins(Integer[] rentedCabins) {
+    public RenterBuilder setRentedCabins(ArrayList<Integer> rentedCabins) {
         this.rentedCabins = rentedCabins;
         return this;
     }
@@ -38,7 +41,12 @@ public class RenterBuilder {
         return this;
     }
 
+    public RenterBuilder setID(Integer ID) {
+        this.ID = ID;
+        return this;
+    }
+
     public Renter createRenter() {
-        return new Renter(renter, rentedCabins, debtAmount, phoneNumber, email, info);
+        return new Renter(renter, rentedCabins, debtAmount, phoneNumber, email, info, ID);
     }
 }

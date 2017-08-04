@@ -50,17 +50,29 @@ public class DataProcessing {
 
     public static void updateDatabaseOnNewMonth(LocalDate date) throws SQLException {
         Statement statement = connection.createStatement();
-        String kek = "CREATE TABLE IF NOT EXISTS PAYMENTS." + Utils.formatDateToMMM_yyyyString(date) + "\n" +
-                "(\n" +
-                "  ID integer AUTO_INCREMENT NOT NULL,\n" +
-                "  DATE date NOT NULL,\n" +
-                "  PAYMENT varchar(256) NOT NULL,\n" +
-                "  TYPE boolean NOT NULL,\n" +
-                "  AMOUNT integer NOT NULL,\n" +
-                "  PAYMENT_TYPE boolean,\n" +
-                "  CABINS_NUMBERS array NOT NULL)\n";
-        logger.info("Executing query:\n " + kek);
-        statement.executeUpdate(kek);
+        PreparedStatement ps = connection.prepareStatement("SELECT count(TABLE_NAME)FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?");
+        ps.setString(1,Utils.formatDateToMMM_yyyyString(date).toUpperCase());
+        ResultSet set = ps.executeQuery();
+        int count = 0;
+        while (set.next()) {
+            logger.info("Does table exist  - " + set.getInt(1));
+            count = set.getInt(1);
+        }
+        if (count == 0) {
+            String query = "CREATE TABLE IF NOT EXISTS PAYMENTS." + Utils.formatDateToMMM_yyyyString(date) + "\n" +
+                    "(\n" +
+                    "  ID integer AUTO_INCREMENT NOT NULL,\n" +
+                    "  DATE date NOT NULL,\n" +
+                    "  PAYMENT varchar(256) NOT NULL,\n" +
+                    "  TYPE boolean NOT NULL,\n" +
+                    "  AMOUNT integer NOT NULL,\n" +
+                    "  PAYMENT_TYPE boolean,\n" +
+                    "  CABINS_NUMBERS array NOT NULL)\n";
+            logger.info("Executing query:\n " + query);
+            logger.info(statement.executeUpdate(query));
+            logger.info(statement.executeUpdate("UPDATE CABINS.CABINS set IS_PAID = 'FALSE', CURRENT_PAYMENT_DATE = '0'"));
+        }
+
     }
 
     public static int insertPayment(Payment payment, String period) {
@@ -175,7 +187,7 @@ public class DataProcessing {
         if (toStock) {
             try {
                 PreparedStatement ps = connection.prepareStatement("UPDATE CABINS.CABINS  SET CURRTEN_PAYMENT_AMOUNT = '0', TRANSFER_DATE = NULL, RENTER = ''," +
-                        " IS_PAID = 'FALSE', PAYMENT_DATES = NULL , CURRENT_PAYMENT_DATE = '0', PREVIOUS_RENTERS = ?, STATUS = 'TRUE' WHERE ID = ?");
+                        " IS_PAID = 'FALSE', PAYMENT_DATES = '' , CURRENT_PAYMENT_DATE = '0', PREVIOUS_RENTERS = ?, STATUS = 'TRUE' WHERE ID = ?");
                 ps.setArray(1, connection.createArrayOf("VARCHAR", cabin.getPreviousRenters().toArray()));
                 ps.setInt(2, cabin.getID());
                 logger.info(ps.executeUpdate());
@@ -207,11 +219,29 @@ public class DataProcessing {
 
     public static void updateCabin(Cabin cabin) {
         try {
-            PreparedStatement ps = connection.prepareStatement("UPDATE CABINS.CABINS SET NAME = ?, RENT_PRICE = ?, INVENTORY_PRICE = ?, INFO = ?");
+            logger.info("Updating cabin " + cabin.toString());
+            PreparedStatement ps = connection.prepareStatement("UPDATE CABINS.CABINS SET NAME = ?, RENT_PRICE = ?, INVENTORY_PRICE = ?,  INFO = ? , RENTER = ? WHERE ID = ?");
             ps.setString(1, cabin.getName());
             ps.setInt(2, cabin.getRentPrice());
             ps.setInt(3, cabin.getInventoryPrice());
             ps.setString(4, cabin.getAdditionalInfo());
+            ps.setString(5,cabin.getRenter());
+            ps.setInt(6,cabin.getID());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void help(int number, String name, int price, int current, int inv) {
+        try {
+            PreparedStatement ps = connection.prepareStatement("UPDATE CABINS.CABINS SET NAME = ?, RENT_PRICE = ?, CURRTEN_PAYMENT_AMOUNT = ?, INVENTORY_PRICE = ? WHERE NUMBER = ?");
+            ps.setString(1, name);
+            ps.setInt(2,price);
+            ps.setInt(3,current);
+            ps.setInt(4,inv);
+            ps.setInt(5,number);
+            logger.info(ps.executeUpdate());
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -258,7 +288,11 @@ public class DataProcessing {
             Object[] objects = (Object[]) array.getArray();
             Integer[] integers = new Integer[objects.length];
             for (int i = 0; i < objects.length; i++) {
-                integers[i] = Integer.parseInt((String) objects[i]);
+                if (objects[i] != null && objects[i] instanceof String) {
+                    integers[i] = Integer.parseInt((String) objects[i]);
+                } else if (objects[i] instanceof Integer) {
+                    integers[i] = (Integer) objects[i];
+                }
             }
             return integers;
         } catch (SQLException e) {
@@ -278,30 +312,46 @@ public class DataProcessing {
         }
     }
 
-    public static void insertRenter(Renter renter) {
+    public static int insertRenter(Renter renter) {
         try {
-            PreparedStatement ps = connection.prepareStatement("INSERT INTO RENTERS.RENTERS_INFO(RENTER,RENTED_CABINS,DEBT,PHONE,EMAIL,INFO) VALUES(?,'',?,?,?,?)");
+            connection.setAutoCommit(false);
+            PreparedStatement ps = connection.prepareStatement("INSERT INTO RENTERS.RENTERS_INFO(RENTER,RENTED_CABINS,DEBT,PHONE,EMAIL,INFO) VALUES(?,?,?,?,?,?)",Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, renter.getRenter());
-            ps.setInt(2, renter.getDebtAmount());
-            ps.setString(3, renter.getPhoneNumber());
-            ps.setString(4, renter.getEmail());
-            ps.setString(5, renter.getInfo());
+
+
+
+            ps.setArray(2,connection.createArrayOf("VARCHAR",renter.getRentedCabins().toArray()));
+            ps.setInt(3, renter.getDebtAmount());
+            ps.setString(4, renter.getPhoneNumber());
+            ps.setString(5, renter.getEmail());
+            ps.setString(6, renter.getInfo());
             ps.executeUpdate();
+
+            ResultSet rs = ps.getGeneratedKeys();
+            int key = 0;
+            while (rs.next()) {
+                key = rs.getInt(1);
+            }
+            connection.commit();
+            connection.setAutoCommit(true);
+            return key;
         } catch (SQLException e) {
             e.printStackTrace();
+            return 1;
         }
     }
 
     public static void updateRenter(Renter renter) {
         try {
             PreparedStatement ps = connection.prepareStatement("UPDATE RENTERS.RENTERS_INFO SET RENTER = ? , RENTED_CABINS = ?, " +
-                    "DEBT = ?, PHONE = ?, EMAIL = ?, INFO = ?  WHERE");
+                    "DEBT = ?, PHONE = ?, EMAIL = ?, INFO = ?  WHERE ID = ?");
             ps.setString(1, renter.getRenter());
-            ps.setArray(2, connection.createArrayOf("INTEGER", renter.getRentedCabins().toArray()));
+            ps.setArray(2, connection.createArrayOf("VARCHAR", renter.getRentedCabins().toArray()));
             ps.setInt(3, renter.getDebtAmount());
             ps.setString(4, renter.getPhoneNumber());
             ps.setString(5, renter.getEmail());
             ps.setString(6, renter.getInfo());
+            ps.setInt(7,renter.getID());
             logger.info("Updating renter " + renter.getRenter() + " " + ps.executeUpdate());
         } catch (SQLException e) {
             e.printStackTrace();
@@ -322,8 +372,8 @@ public class DataProcessing {
 
     public static void deleteRenter(Renter renter) {
         try {
-            PreparedStatement ps = connection.prepareStatement("DELETE FROM RENTERS.RENTERS_INFO WHERE RENTER = ?");
-            ps.setString(1, renter.getRenter());
+            PreparedStatement ps = connection.prepareStatement("DELETE FROM RENTERS.RENTERS_INFO WHERE ID = ?");
+            ps.setInt(1,renter.getID());
             logger.info("Result of renter removal: " + ps.executeUpdate());
         } catch (SQLException e) {
             e.printStackTrace();
@@ -394,7 +444,7 @@ public class DataProcessing {
             }
             Statement statement = connection.createStatement();
             statement.execute("SCRIPT TO 'init.sql'");
-            statement.execute("SCRIPT TO 'extraBackup.sql'");
+            //statement.execute("SCRIPT TO 'extraBackup.sql'");
         } catch (SQLException | IOException e) {
             e.printStackTrace();
         }
